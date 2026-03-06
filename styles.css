@@ -1,0 +1,30 @@
+/* ── Container max-width ── */
+.container { max-width: 780px; }
+
+/* ── Roof type card ── */
+.roof-card {
+  cursor: pointer;
+  border: 2px solid #dee2e6 !important;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  user-select: none;
+}
+.roof-card:hover  { border-color: #93c5fd !important; }
+.roof-card.active { border-color: #0d6efd !important; box-shadow: 0 0 0 3px rgba(13,110,253,0.12) !important; }
+.roof-card.active .card-label { color: #0d6efd; }
+
+/* ── Diagram ── */
+.diagram-wrap svg { max-width: 100%; height: auto; }
+
+/* ── Result card ── */
+.result-card {
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  border-radius: 12px;
+  color: white;
+  text-align: center;
+  padding: 2rem 1.5rem;
+}
+.result-label   { font-size: 0.82rem; font-weight: 600; opacity: 0.75; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.35rem; }
+.result-value   { font-size: 2.75rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+.result-unit    { font-size: 1.1rem; opacity: 0.85; margin-top: 0.25rem; }
+.result-alt     { font-size: 0.9rem; opacity: 0.65; margin-top: 0.75rem; }
+.result-formula { font-size: 0.78rem; opacity: 0.55; font-style: italic; margin-top: 1rem; }
