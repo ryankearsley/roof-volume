@@ -83,6 +83,7 @@ body {
 .roof-type-row {
   display: flex;
   gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .roof-card {
@@ -199,23 +200,69 @@ body {
 }
 
 /* ─────────────────────────────────────────────
-   Inputs
+   Input labels & tooltips
 ───────────────────────────────────────────── */
 .calc-card .form-label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #64748b;
-  margin-bottom: 0.3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.2rem;
 }
 
-.calc-card .form-label .fw-normal {
-  font-weight: 400 !important;
+.field-label-text {
   font-size: 0.72rem;
-  text-transform: none;
-  letter-spacing: 0;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569;
+}
+
+.field-hint {
+  font-size: 0.7rem;
   color: #94a3b8;
+  margin-bottom: 0.3rem;
+  margin-top: -0.1rem;
+}
+
+.field-tooltip-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #64748b;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.field-tooltip-btn:hover {
+  background: #2563eb;
+  color: #fff;
+}
+
+/* Bootstrap tooltip override for measure tips */
+.measure-tooltip .tooltip-inner {
+  max-width: 260px;
+  font-size: 0.8rem;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  background: #1e293b;
+  border-radius: 8px;
+}
+
+.field-error {
+  font-size: 0.75rem;
+  color: #dc2626;
+  margin-top: 0.25rem;
+  font-weight: 500;
 }
 
 .calc-card .form-control {
@@ -370,8 +417,268 @@ body {
 }
 
 /* ─────────────────────────────────────────────
-   Responsive
+   Result save row
 ───────────────────────────────────────────── */
+.result-save-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem 1.25rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.save-label-input {
+  flex: 1;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: #1e293b;
+  outline: none;
+  transition: border-color 0.15s;
+  min-width: 0;
+}
+
+.save-label-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+.save-label-input::placeholder { color: #94a3b8; }
+
+.save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 0.9rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.save-btn:hover { opacity: 0.88; }
+
+/* ─────────────────────────────────────────────
+   Saved calculations section
+───────────────────────────────────────────── */
+#saved-section { margin-top: 1.5rem; }
+
+.saved-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.saved-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #fff;
+  color: #2563eb;
+  border: 1.5px solid #2563eb;
+  border-radius: 7px;
+  padding: 0.3rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.print-btn:hover {
+  background: #eff6ff;
+}
+
+.clear-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  transition: color 0.15s;
+}
+
+.clear-btn:hover { color: #dc2626; }
+
+.saved-item {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.saved-item-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.saved-item-reorder {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.reorder-btn {
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  color: #94a3b8;
+  font-size: 0.55rem;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.reorder-btn:hover:not(:disabled) {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #93c5fd;
+}
+
+.reorder-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.saved-item-num {
+  width: 24px;
+  height: 24px;
+  background: #f1f5f9;
+  border-radius: 50%;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.saved-item-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saved-item-meta {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.saved-breakdown {
+  font-size: 0.73rem;
+  color: #64748b;
+  margin-top: 3px;
+}
+
+.saved-item-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.saved-item-vol {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e40af;
+  white-space: nowrap;
+}
+
+.saved-item-unit {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.saved-delete-btn {
+  background: none;
+  border: none;
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.2rem 0.3rem;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+
+.saved-delete-btn:hover {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.saved-total {
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  text-align: center;
+  margin-top: 0.75rem;
+}
+
+.total-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 0.25rem;
+}
+
+.total-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.total-unit {
+  font-size: 1rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.total-alt {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.6);
+  margin-top: 0.35rem;
+}
 @media (max-width: 575px) {
   .calc-card { padding: 1.25rem; }
   .calc-divider { margin: 0 -1.25rem 1.25rem; }

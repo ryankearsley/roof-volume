@@ -58,6 +58,42 @@
           </div>
         </div>
 
+        <div class="roof-card" data-type="hip" onclick="selectRoof('hip')">
+          <div class="roof-card-inner">
+            <svg width="56" height="40" viewBox="0 0 64 44" class="roof-card-icon">
+              <rect x="4" y="26" width="56" height="14" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5" rx="1"/>
+              <polygon points="4,26 60,26 50,8 14,8" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
+              <line x1="4"  y1="26" x2="14" y2="8"  stroke="#2563eb" stroke-width="1.5"/>
+              <line x1="60" y1="26" x2="50" y2="8"  stroke="#2563eb" stroke-width="1.5"/>
+              <line x1="14" y1="8"  x2="50" y2="8"  stroke="#1d4ed8" stroke-width="2"/>
+            </svg>
+            <span class="roof-card-label">Hip</span>
+          </div>
+        </div>
+
+        <div class="roof-card" data-type="leanto" onclick="selectRoof('leanto')">
+          <div class="roof-card-inner">
+            <svg width="56" height="40" viewBox="0 0 64 44" class="roof-card-icon">
+              <rect x="4" y="28" width="56" height="12" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5" rx="1"/>
+              <polygon points="4,28 60,28 60,8" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+            <span class="roof-card-label">Lean-to</span>
+          </div>
+        </div>
+
+        <div class="roof-card" data-type="hipwalls" onclick="selectRoof('hipwalls')">
+          <div class="roof-card-inner">
+            <svg width="56" height="40" viewBox="0 0 64 48" class="roof-card-icon">
+              <rect x="4" y="30" width="56" height="14" fill="#e0f2fe" stroke="#2563eb" stroke-width="1.5" rx="1"/>
+              <polygon points="4,30 60,30 50,12 14,12" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
+              <line x1="4"  y1="30" x2="14" y2="12" stroke="#2563eb" stroke-width="1.5"/>
+              <line x1="60" y1="30" x2="50" y2="12" stroke="#2563eb" stroke-width="1.5"/>
+              <line x1="14" y1="12" x2="50" y2="12" stroke="#1d4ed8" stroke-width="2"/>
+            </svg>
+            <span class="roof-card-label">Hip + Walls</span>
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -101,7 +137,31 @@
         <div class="result-alt" id="result-alt"></div>
         <div id="result-breakdown" class="d-none result-breakdown"></div>
         <div class="result-formula" id="result-formula"></div>
+        <!-- Save row -->
+        <div class="result-save-row">
+          <input type="text" id="save-label" class="save-label-input" placeholder="Label this calculation (e.g. Main house)…" maxlength="60" />
+          <button class="save-btn" onclick="saveCalculation()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save
+          </button>
+        </div>
       </div>
+    </div>
+
+    <!-- Saved calculations -->
+    <div id="saved-section" class="d-none">
+      <div class="saved-header">
+        <div class="section-label mb-0">Saved calculations</div>
+        <div class="saved-header-actions">
+          <button class="print-btn" onclick="printSummary()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print summary
+          </button>
+          <button class="clear-btn" onclick="clearAllCalculations()">Clear all</button>
+        </div>
+      </div>
+      <div id="saved-list"></div>
+      <div class="saved-total" id="saved-total"></div>
     </div>
 
   </div>
