@@ -64,28 +64,6 @@
         ? `H = √(S² − L₂² − (W/2)²)  ·  V = ½WL₁H + WHL₂/6`
         : `V_gable = ½ × W × L₁ × H  ·  V_pyramid = W × H × L₂ / 6`,
     },
-    hip: {
-      label: 'Hip Roof',
-      fields: [
-        {
-          id: 'length', label: 'Length', hint: 'Longest dimension (L ≥ W)',
-          tooltip: 'Measure the longest dimension of the building at eave level, parallel to the ridge. Must be equal to or greater than the width.'
-        },
-        {
-          id: 'width', label: 'Width', hint: 'Shortest dimension',
-          tooltip: 'Measure the shortest dimension of the building at eave level, perpendicular to the ridge.'
-        },
-        {
-          id: 'height', label: 'Ridge Height', hint: 'Eave to ridge',
-          tooltip: 'Measure the vertical height from the eave (bottom edge of the roof) straight up to the ridge. Use a plumb line or spirit level for accuracy.'
-        },
-      ],
-      formula: (L, W, H) => (W * H * (3 * L - W)) / 6,
-      slopeOffset: (W) => W / 2,
-      formulaText: () => measureMode === 'slope'
-        ? `H = √(S² − (W/2)²)  →  V = W × H × (3L − W) / 6`
-        : `V = W × H × (3L − W) / 6`,
-    },
     leanto: {
       label: 'Lean-to Roof',
       fields: [
@@ -339,99 +317,6 @@
               stroke="${dimColour}" stroke-width="1.2"
               marker-start="url(#ex-s)" marker-end="url(#ex-e)"/>
         <text x="242" y="140" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${l2Label}</text>
-
-        ${heightAnnotation}
-      </svg>`;
-    },
-
-    hip: (mode, vals = {}) => {
-      const u = getUnitLabel();
-      const lbl = (v, name) => v ? `${name} = ${formatNum(v)} ${u}` : name;
-      const wLabel = lbl(vals.width,  'Width (W)');
-      const lLabel = lbl(vals.length, 'Length (L)');
-      const hLabel = mode === 'slope' ? lbl(vals.slope, 'Slope (S)') : lbl(vals.height, 'Height (H)');
-      const dc = '#64748b', sc = '#2563eb';
-
-      // Vertices — longer building (L:W ≈ 2.5:1) so the ridge is clearly prominent
-      // Base:  A(25,155) B(235,155) C(285,118) D(75,118)
-      // Ridge: E(100,45) F(210,45)  — 110px ridge vs 210px eave
-
-      const heightAnnotation = mode === 'slope' ? `
-        <line x1="130" y1="153" x2="155" y2="47"
-              stroke="${sc}" stroke-width="2" stroke-dasharray="6,3"
-              marker-start="url(#hp-ss)" marker-end="url(#hp-se)"/>
-        <polyline points="130,149 138,151 136,157" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
-        <text x="96" y="91" text-anchor="middle" fill="${sc}" font-size="11" font-weight="700"
-              transform="rotate(-77,96,91)">${hLabel}</text>
-      ` : `
-        <line x1="2" y1="155" x2="2" y2="45" stroke="${dc}" stroke-width="1.2"
-              marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
-        <line x1="25"  y1="155" x2="-1" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-        <line x1="100" y1="45"  x2="-1" y2="45"  stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-        <text x="-12" y="100" text-anchor="middle" fill="#475569" font-size="11" font-weight="600"
-              transform="rotate(-90,-12,100)">${hLabel}</text>
-      `;
-
-      return `
-      <svg width="320" height="195" viewBox="-25 5 330 205" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <marker id="hp-e" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
-          </marker>
-          <marker id="hp-s" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
-          </marker>
-          <marker id="hp-se" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
-          </marker>
-          <marker id="hp-ss" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
-          </marker>
-        </defs>
-
-        <!-- Hidden base & back hip edges -->
-        <line x1="25"  y1="155" x2="75"  y2="118" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <line x1="75"  y1="118" x2="285" y2="118" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <line x1="75"  y1="118" x2="100" y2="45"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <line x1="285" y1="118" x2="210" y2="45"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-
-        <!-- Back slope D-C-F-E (faint) -->
-        <polygon points="75,118 285,118 210,45 100,45"
-                 fill="#93c5fd" stroke="#2563eb" stroke-width="1" opacity="0.35"/>
-
-        <!-- Left hip triangle A-D-E -->
-        <polygon points="25,155 75,118 100,45"
-                 fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
-
-        <!-- Right hip triangle B-C-F -->
-        <polygon points="235,155 285,118 210,45"
-                 fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
-
-        <!-- Front slope trapezoid A-B-F-E — 210px base, 110px ridge -->
-        <polygon points="25,155 235,155 210,45 100,45"
-                 fill="#bfdbfe" stroke="#2563eb" stroke-width="2"/>
-
-        <!-- Ridge E-F — long and prominent -->
-        <line x1="100" y1="45" x2="210" y2="45" stroke="#1d4ed8" stroke-width="2.5"/>
-        <circle cx="100" cy="45" r="2.5" fill="#1d4ed8"/>
-        <circle cx="210" cy="45" r="2.5" fill="#1d4ed8"/>
-
-        <!-- Front hip rafters A-E and B-F -->
-        <line x1="25"  y1="155" x2="100" y2="45" stroke="#2563eb" stroke-width="1.5"/>
-        <line x1="235" y1="155" x2="210" y2="45" stroke="#2563eb" stroke-width="1.5"/>
-
-        <!-- Right base edge B-C -->
-        <line x1="235" y1="155" x2="285" y2="118" stroke="#2563eb" stroke-width="1.5"/>
-
-        <!-- Length (L): below front eave A-B -->
-        <line x1="25" y1="173" x2="235" y2="173" stroke="${dc}" stroke-width="1.2"
-              marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
-        <text x="130" y="187" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${lLabel}</text>
-
-        <!-- Width (W): along right face B-C, offset -->
-        <line x1="243" y1="163" x2="293" y2="126" stroke="${dc}" stroke-width="1.2"
-              marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
-        <text x="285" y="155" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${wLabel}</text>
 
         ${heightAnnotation}
       </svg>`;
@@ -935,11 +820,6 @@
 
     if (!isFinite(L) || !isFinite(W) || L <= 0 || W <= 0) {
       showError('Please enter valid positive values for all dimensions.');
-      return;
-    }
-
-    if (currentRoof === 'hip' && L < W) {
-      showError('For a hip roof, Length must be greater than or equal to Width.');
       return;
     }
 
