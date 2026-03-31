@@ -238,7 +238,7 @@
 
   function renderControls() {
     document.getElementById('controls-row').innerHTML = `
-      <div class="d-flex justify-content-center gap-3 flex-wrap mb-4">
+      <div class="controls-row">
         <div class="btn-group" role="group">
           <button type="button" class="btn btn-sm ${currentUnit === 'metric'   ? 'btn-primary' : 'btn-outline-primary'}" onclick="setUnit('metric')">Metric (m)</button>
           <button type="button" class="btn btn-sm ${currentUnit === 'imperial' ? 'btn-primary' : 'btn-outline-primary'}" onclick="setUnit('imperial')">Imperial (ft)</button>
@@ -297,6 +297,7 @@
     });
     hideResult();
     hideError();
+    renderControls();
     renderDiagram();
     renderInputs();
   }
@@ -377,10 +378,8 @@
 
       const bd = document.getElementById('result-breakdown');
       bd.innerHTML = `
-        <div class="d-flex justify-content-center gap-4 flex-wrap" style="color:rgba(255,255,255,0.9);font-size:0.9rem">
-          <span>🏠 Gable section: <strong>${formatNum(vGable)} ${vu}</strong></span>
-          <span>🔺 Pyramid section: <strong>${formatNum(vPyramid)} ${vu}</strong></span>
-        </div>`;
+        <span>🏠 Gable section: <strong>${formatNum(vGable)} ${vu}</strong></span>
+        <span>🔺 Pyramid section: <strong>${formatNum(vPyramid)} ${vu}</strong></span>`;
       bd.classList.remove('d-none');
 
       document.getElementById('result').classList.remove('d-none');
