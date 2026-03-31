@@ -198,14 +198,52 @@ body {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 1.25rem;
-  text-align: center;
+  padding: 0;
   margin-bottom: 1.5rem;
+  overflow: hidden;
+  min-height: 280px;
+  width: 100%;
+}
+
+.diagram-wrap canvas {
+  border-radius: 8px;
+  display: block;
+  max-width: 100%;
 }
 
 .diagram-wrap svg {
   max-width: 100%;
   height: auto;
+}
+
+/* Three.js CSS2D labels */
+.diag3d-label {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  background: rgba(248,250,252,0.75);
+  border-radius: 3px;
+  padding: 1px 3px;
+}
+
+.diag3d-label.ridge {
+  color: #1d4ed8;
+}
+
+.diag3d-label.slope {
+  color: #2563eb;
+}
+
+/* Hint text below diagram */
+.diagram-hint {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 0.35rem;
+  letter-spacing: 0.02em;
 }
 
 /* ─────────────────────────────────────────────
@@ -704,7 +742,7 @@ body {
   .roof-card { max-width: none; }
 }
 
-/* ── Hip diagram wall layer transition ──────────────────────────────────── */
+/* ── Pitch / Hip diagram wall layer transition ──────────────────────────── */
 .wall-layer {
   transition: opacity 0.45s ease;
 }
@@ -713,7 +751,7 @@ body {
   pointer-events: none;
 }
 
-/* ── Hip wall height input row transition ───────────────────────────────── */
+/* ── Pitch wall height input row transition ─────────────────────────────── */
 .wall-input-row {
   overflow: hidden;
   max-height: 110px;
@@ -728,7 +766,7 @@ body {
   pointer-events: none;
 }
 
-/* ── Hip mode toggle button styling ─────────────────────────────────────── */
+/* ── Walls mode toggle button styling ───────────────────────────────────── */
 .hip-mode-toggle {
   border-radius: 6px;
 }
@@ -748,4 +786,26 @@ body {
 .hip-mode-toggle .btn-outline-warning:hover {
   background-color: #fef3c7;
   color: #92400e;
+}
+
+/* ── Pitch type toggle (double / mono) ──────────────────────────────────── */
+.pitch-type-toggle {
+  border-radius: 6px;
+}
+.pitch-type-toggle .btn-info,
+.pitch-type-toggle .btn-outline-info {
+  font-weight: 600;
+}
+.pitch-type-toggle .btn-info {
+  background-color: #0891b2;
+  border-color: #0891b2;
+  color: #fff;
+}
+.pitch-type-toggle .btn-outline-info {
+  color: #0e7490;
+  border-color: #22d3ee;
+}
+.pitch-type-toggle .btn-outline-info:hover {
+  background-color: #ecfeff;
+  color: #0e7490;
 }

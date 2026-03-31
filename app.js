@@ -2,8 +2,9 @@
   let currentRoof = 'gable';
   let currentUnit = 'metric';
   let measureMode = 'vertical'; // 'vertical' | 'slope'
+  let pitchMode   = 'double';   // 'double' | 'mono'
   let lastResult  = null;       // holds the most recent calculation for saving
-  const wallModes = {};                                   // per-roof: { gable:'roof', hip:'roof', ... }
+  const wallModes = {};                                   // per-roof: { gable:'roof', pitch:'roof', ... }
   function getWallMode() { return wallModes[currentRoof] || 'roof'; }
 
   // ── localStorage ───────────────────────────────────────────────────────────
@@ -111,8 +112,8 @@
       },
     },
 
-    hip: {
-      label: 'Hip Roof',
+    pitch: {
+      label: 'Pitch Roof',
       fields: [
         {
           id: 'length', label: 'Length (L)', hint: 'External building length',
@@ -137,14 +138,16 @@
       ],
       slopeOffset: (W) => W / 2,
       formulaText: () => {
+        const mono = pitchMode === 'mono';
+        const frac = mono ? 'L+2R' : '2L+R';
         if (getWallMode() === 'walls') {
           return measureMode === 'slope'
-            ? `H = √(S² − (W/2)²)  →  V = W×L×WH + W×H×(2L+R)/6`
-            : `V = W×L×WH + W×H×(2L+R)/6`;
+            ? `H = √(S² − (W/2)²)  →  V = W×L×WH + W×H×(${frac})/6`
+            : `V = W×L×WH + W×H×(${frac})/6`;
         }
         return measureMode === 'slope'
-          ? `H = √(S² − (W/2)²)  →  V = W×H×(2L+R)/6`
-          : `V = W×H×(2L+R)/6`;
+          ? `H = √(S² − (W/2)²)  →  V = W×H×(${frac})/6`
+          : `V = W×H×(${frac})/6`;
       },
     },
   };
@@ -197,18 +200,18 @@
     <line x1="55" y1="155" x2="155" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
     <line x1="155" y1="120" x2="275" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
     <line x1="155" y1="120" x2="215" y2="25"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-    <!-- Back gable face -->
-    <polygon points="155,120 275,120 215,25" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5" opacity="0.55"/>
-    <!-- Left roof slope -->
-    <polygon points="55,155 115,60 215,25 155,120" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
-    <!-- Right roof slope -->
-    <polygon points="175,155 115,60 215,25 275,120" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
-    <!-- Front gable triangle -->
-    <polygon points="55,155 175,155 115,60" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+    <!-- Back gable face — drawn first, visible through translucent front slopes -->
+    <polygon points="155,120 275,120 215,25" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5" opacity="0.4"/>
+    <!-- Left roof slope — translucent -->
+    <polygon points="55,155 115,60 215,25 155,120" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5" opacity="0.78"/>
+    <!-- Right roof slope — translucent -->
+    <polygon points="175,155 115,60 215,25 275,120" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5" opacity="0.78"/>
+    <!-- Front gable triangle — slightly more opaque so it reads as a front face -->
+    <polygon points="55,155 175,155 115,60" fill="#eff6ff" stroke="#2563eb" stroke-width="2" opacity="0.88"/>
     <!-- Dashed vertical height line and right-angle mark -->
     <line x1="115" y1="62" x2="115" y2="153" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3"/>
     <polyline points="115,147 107,147 107,155" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
-    <!-- Right bottom edge, back edge, ridge -->
+    <!-- Right bottom edge, back edge, ridge (drawn over translucent slopes) -->
     <line x1="175" y1="155" x2="275" y2="120" stroke="#2563eb" stroke-width="1.5"/>
     <line x1="275" y1="120" x2="215" y2="25"  stroke="#2563eb" stroke-width="1.5"/>
     <line x1="115" y1="60"  x2="215" y2="25"  stroke="#1d4ed8" stroke-width="2"/>
@@ -238,15 +241,15 @@
     <line x1="55" y1="155" x2="155" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
     <line x1="155" y1="120" x2="275" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
     <line x1="155" y1="120" x2="215" y2="25"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-    <!-- Back gable face -->
-    <polygon points="155,120 275,120 215,25" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5" opacity="0.55"/>
-    <!-- Left roof slope -->
-    <polygon points="55,155 115,60 215,25 155,120" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
-    <!-- Right roof slope -->
-    <polygon points="175,155 115,60 215,25 275,120" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
-    <!-- Front gable triangle -->
-    <polygon points="55,155 175,155 115,60" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
-    <!-- Right bottom edge and back edge -->
+    <!-- Back gable face — drawn first, visible through translucent front slopes -->
+    <polygon points="155,120 275,120 215,25" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5" opacity="0.4"/>
+    <!-- Left roof slope — translucent -->
+    <polygon points="55,155 115,60 215,25 155,120" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5" opacity="0.78"/>
+    <!-- Right roof slope — translucent -->
+    <polygon points="175,155 115,60 215,25 275,120" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5" opacity="0.78"/>
+    <!-- Front gable triangle — slightly more opaque so it reads as a front face -->
+    <polygon points="55,155 175,155 115,60" fill="#eff6ff" stroke="#2563eb" stroke-width="2" opacity="0.88"/>
+    <!-- Right bottom edge, back edge, ridge (drawn over translucent slopes) -->
     <line x1="175" y1="155" x2="275" y2="120" stroke="#2563eb" stroke-width="1.5"/>
     <line x1="275" y1="120" x2="215" y2="25"  stroke="#2563eb" stroke-width="1.5"/>
     <!-- Ridge -->
@@ -455,7 +458,7 @@
   </svg>`;
     },
 
-    hip: (mode, vals = {}) => {
+    pitch: (mode, vals = {}) => {
       const u = getUnitLabel();
       const lbl = (v, name) => v ? `${name} = ${formatNum(v)} ${u}` : name;
       const lLabel    = lbl(vals.length,      'L');
@@ -464,22 +467,156 @@
       const wallLabel = lbl(vals.wallHeight,  'WH');
       const cLabel    = lbl(vals.ridgeLength, 'R');
       const dc = '#64748b', sc = '#2563eb';
+      const isDouble  = pitchMode === 'double';
 
-      const roofAnnotation = mode === 'slope' ? `
-        <line x1="130" y1="153" x2="155" y2="47"
-              stroke="${sc}" stroke-width="2" stroke-dasharray="6,3"
-              marker-start="url(#hp-ss)" marker-end="url(#hp-se)"/>
-        <polyline points="130,149 138,151 136,157" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
-        <text x="96" y="91" text-anchor="middle" fill="${sc}" font-size="11" font-weight="700"
-              transform="rotate(-77,96,91)">${aLabel}</text>
-      ` : `
-        <line x1="3" y1="45" x2="3" y2="155" stroke="${dc}" stroke-width="1.2"
-              marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
-        <line x1="25"  y1="155" x2="0"  y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-        <line x1="100" y1="45"  x2="0"  y2="45"  stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-        <text x="-9" y="100" text-anchor="middle" fill="#475569" font-size="11" font-weight="600"
-              transform="rotate(-90,-9,100)">${aLabel}</text>
-      `;
+      // ── MONO PITCH: hip end faces viewer, gable at back ────────────────────
+      // Same perspective/orientation as the gable diagram, but:
+      //   - Front face = hip (sloped triangle, apex set back & right in perspective)
+      //   - Back face  = gable wall (faint, like back gable in gable diagram)
+      //
+      // Vertices (same front/back eave corners as gable):
+      //   FrontL=(55,155)  FrontR=(175,155)  BackL=(155,120)  BackR=(275,120)
+      //   hipApex=(138,52)   ← apex offset right (+23) vs centred gable peak (115,60)
+      //   gablePeak=(238,17) ← hipApex + full-depth perspective offset (+100,-35)
+      //   Ridge: hipApex → gablePeak
+      if (!isDouble) {
+        const ms = 'mp-s', me = 'mp-e', msc = 'mp-sc', mec = 'mp-ec';
+        const monoWLabel = lbl(vals.width,    'Width (W)');
+        const monoLLabel = lbl(vals.length,   'Length (L)');
+        const monoHLabel = mode === 'slope' ? lbl(vals.slope, 'Slope (S)') : lbl(vals.height, 'Height (H)');
+
+        const monoWallLayer = `
+    <g class="wall-layer">
+      <polygon points="55,155 175,155 175,205 55,205"
+               fill="#e0f2fe" stroke="#2563eb" stroke-width="1.5"/>
+      <polygon points="175,155 275,120 275,170 175,205"
+               fill="#bae6fd" stroke="#2563eb" stroke-width="1.5"/>
+      <line x1="155" y1="120" x2="155" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
+      <line x1="55"  y1="205" x2="155" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
+      <line x1="155" y1="170" x2="275" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
+      <line x1="193" y1="157" x2="193" y2="203" stroke="${dc}" stroke-width="1.2"
+            marker-start="url(#${ms})" marker-end="url(#${me})"/>
+      <line x1="175" y1="155" x2="196" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+      <line x1="175" y1="205" x2="196" y2="205" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+      <text x="202" y="183" text-anchor="start" fill="#475569" font-size="11" font-weight="600">${wallLabel}</text>
+    </g>`;
+
+        const monoHeightAnnotation = mode === 'slope' ? `
+    <!-- Slope dashed drop line from hip apex, right-angle mark at base -->
+    <line x1="138" y1="54" x2="138" y2="153" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3"/>
+    <polyline points="138,148 130,148 130,155" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+    <!-- Slope label along left edge of hip face -->
+    <text transform="translate(91,104) rotate(-51)" text-anchor="middle"
+          fill="${sc}" font-size="11" font-weight="700">${monoHLabel}</text>
+` : `
+    <!-- Height dimension line left of hip face -->
+    <line x1="36" y1="155" x2="36" y2="52" stroke="${dc}" stroke-width="1.2"
+          marker-start="url(#${ms})" marker-end="url(#${me})"/>
+    <line x1="55"  y1="155" x2="33" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+    <line x1="36"  y1="52"  x2="138" y2="52" stroke="#94a3b8" stroke-width="0.8" stroke-dasharray="3,3"/>
+    <text x="22" y="104" text-anchor="middle" fill="#475569" font-size="11" font-weight="600"
+          transform="rotate(-90,22,104)">${monoHLabel}</text>
+`;
+
+        return `
+  <svg width="320" height="235" viewBox="-15 0 350 260" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="${me}"  markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
+      </marker>
+      <marker id="${ms}"  markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
+        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
+      </marker>
+      <marker id="${mec}" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
+      </marker>
+      <marker id="${msc}" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
+        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
+      </marker>
+    </defs>
+    ${monoWallLayer}
+    <!-- Hidden back edges (behind slopes) -->
+    <line x1="55"  y1="155" x2="155" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <line x1="155" y1="120" x2="275" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <line x1="155" y1="120" x2="238" y2="17"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <!-- Back gable face — faint, drawn first (same style as gable diagram back face) -->
+    <polygon points="155,120 275,120 238,17" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5" opacity="0.4"/>
+    <!-- Left slope -->
+    <polygon points="55,155 138,52 238,17 155,120" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5" opacity="0.78"/>
+    <!-- Right slope -->
+    <polygon points="175,155 138,52 238,17 275,120" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5" opacity="0.78"/>
+    <!-- Hip face — drawn last so it's prominent; apex offset right signals sloped (not vertical) -->
+    <polygon points="55,155 175,155 138,52" fill="#eff6ff" stroke="#2563eb" stroke-width="2" opacity="0.88"/>
+    <!-- Right eave, right back edge (solid visible lines) -->
+    <line x1="175" y1="155" x2="275" y2="120" stroke="${sc}" stroke-width="1.5"/>
+    <line x1="275" y1="120" x2="238" y2="17"  stroke="${sc}" stroke-width="1.5"/>
+    <!-- Ridge -->
+    <line x1="138" y1="52"  x2="238" y2="17"  stroke="#1d4ed8" stroke-width="2"/>
+    <!-- R: label above ridge midpoint, rotated to follow it -->
+    <text transform="translate(185,26) rotate(-19)" text-anchor="middle"
+          fill="${sc}" font-size="11" font-weight="700">${cLabel}</text>
+    <!-- Width dimension -->
+    <line x1="55"  y1="172" x2="175" y2="172" stroke="${dc}" stroke-width="1.2"
+          marker-start="url(#${ms})" marker-end="url(#${me})"/>
+    <text x="115" y="187" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${monoWLabel}</text>
+    <!-- Length dimension -->
+    <line x1="181" y1="172" x2="281" y2="137" stroke="${dc}" stroke-width="1.2"
+          marker-start="url(#${ms})" marker-end="url(#${me})"/>
+    <text x="231" y="168" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${monoLLabel}</text>
+    ${monoHeightAnnotation}
+  </svg>`;
+      }
+
+      // ── DOUBLE PITCH: 3D perspective (both ends hipped) ─────────────────────
+      // Vertices (3D perspective, same for both modes):
+      // FL=(25,155)  FR=(235,155)  BR=(285,118)  BL=(75,118)
+      // leftPt=(100,45)  rightPt=(210,45)  Ridge: leftPt→rightPt
+
+      const wallLayer = `
+    <g class="wall-layer">
+      <polygon points="25,155 235,155 235,205 25,205"
+               fill="#e0f2fe" stroke="#2563eb" stroke-width="1.5"/>
+      <polygon points="235,155 285,118 285,168 235,205"
+               fill="#bae6fd" stroke="#2563eb" stroke-width="1.5"/>
+      <line x1="75" y1="118" x2="75" y2="168"  stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
+      <line x1="25" y1="205" x2="75" y2="168"  stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
+      <line x1="75" y1="168" x2="285" y2="168" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
+      <line x1="248" y1="157" x2="248" y2="203" stroke="${dc}" stroke-width="1.2"
+            marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
+      <line x1="235" y1="155" x2="251" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+      <line x1="235" y1="205" x2="251" y2="205" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+      <text x="256" y="183" text-anchor="start" fill="#475569" font-size="11" font-weight="600">${wallLabel}</text>
+    </g>`;
+
+      const heightAnnotation = mode === 'slope' ? `
+    <line x1="130" y1="153" x2="155" y2="47"
+          stroke="${sc}" stroke-width="2" stroke-dasharray="6,3"
+          marker-start="url(#hp-ss)" marker-end="url(#hp-se)"/>
+    <polyline points="130,149 138,151 136,157" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+    <text x="96" y="91" text-anchor="middle" fill="${sc}" font-size="11" font-weight="700"
+          transform="rotate(-77,96,91)">${aLabel}</text>
+` : `
+    <line x1="3" y1="45" x2="3" y2="155" stroke="${dc}" stroke-width="1.2"
+          marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
+    <line x1="25"  y1="155" x2="0"  y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+    <line x1="100" y1="45"  x2="0"  y2="45"  stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+    <text x="-9" y="100" text-anchor="middle" fill="#475569" font-size="11" font-weight="600"
+          transform="rotate(-90,-9,100)">${aLabel}</text>
+`;
+
+      // Left end face: HIP (sloped, blue) or GABLE (light, solid, drawn AFTER front slope so it's visible)
+      const leftHipFace = `
+    <!-- Left hip end — sloped, same colour family as roof -->
+    <polygon points="25,155 75,118 100,45"
+             fill="#dbeafe" stroke="#2563eb" stroke-width="1.5" opacity="0.85"/>
+`;
+      const leftGableFace = `
+    <!-- Left gable end — drawn after front slope so it stands clear as a front-facing wall -->
+    <polygon points="25,155 75,118 100,45"
+             fill="#eff6ff" stroke="#2563eb" stroke-width="2" opacity="0.88"/>
+    <!-- Back ridge of gable — solid edge, no longer hidden behind the face -->
+    <line x1="75" y1="118" x2="100" y2="45" stroke="#2563eb" stroke-width="1.5"/>
+`;
 
       return `
   <svg width="320" height="220" viewBox="-30 5 340 235" xmlns="http://www.w3.org/2000/svg">
@@ -498,44 +635,40 @@
       </marker>
     </defs>
 
-    <!-- WALL LAYER (fades out in roof-only mode) -->
-    <g class="wall-layer">
-      <polygon points="25,155 235,155 235,205 25,205"
-               fill="#e0f2fe" stroke="#2563eb" stroke-width="1.5"/>
-      <polygon points="235,155 285,118 285,168 235,205"
-               fill="#bae6fd" stroke="#2563eb" stroke-width="1.5"/>
-      <line x1="75" y1="118" x2="75" y2="168"  stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-      <line x1="25" y1="205" x2="75" y2="168"  stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-      <line x1="75" y1="168" x2="285" y2="168" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-      <!-- h annotation -->
-      <line x1="248" y1="157" x2="248" y2="203" stroke="${dc}" stroke-width="1.2"
-            marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
-      <line x1="235" y1="155" x2="251" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-      <line x1="235" y1="205" x2="251" y2="205" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-      <text x="256" y="183" text-anchor="start" fill="#475569" font-size="11" font-weight="600">${wallLabel}</text>
-    </g>
+    ${wallLayer}
 
-    <!-- ROOF (always visible) -->
-    <line x1="25"  y1="155" x2="75"  y2="118" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <!-- Back hidden edges (dashed) -->
     <line x1="75"  y1="118" x2="285" y2="118" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-    <line x1="75"  y1="118" x2="100" y2="45"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    ${isDouble ? `<line x1="75" y1="118" x2="100" y2="45" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>` : ''}
     <line x1="285" y1="118" x2="210" y2="45"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+
+    <!-- BACK SLOPE — drawn first, translucent so front slope shows over it -->
     <polygon points="75,118 285,118 210,45 100,45"
              fill="#93c5fd" stroke="#2563eb" stroke-width="1" opacity="0.35"/>
-    <polygon points="25,155 75,118 100,45"
-             fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+
+    <!-- Right hip end — same for both modes (always hipped on right) -->
     <polygon points="235,155 285,118 210,45"
-             fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+             fill="#dbeafe" stroke="#2563eb" stroke-width="1.5" opacity="0.85"/>
+
+    ${isDouble ? leftHipFace : ''}
+
+    <!-- FRONT SLOPE — slightly translucent so back slope is faintly visible through it -->
     <polygon points="25,155 235,155 210,45 100,45"
-             fill="#bfdbfe" stroke="#2563eb" stroke-width="2"/>
+             fill="#bfdbfe" stroke="#2563eb" stroke-width="2" opacity="0.78"/>
+
+    ${!isDouble ? leftGableFace : ''}
+
+    <!-- Ridge -->
     <line x1="100" y1="45" x2="210" y2="45" stroke="#1d4ed8" stroke-width="2.5"/>
     <circle cx="100" cy="45" r="2.5" fill="#1d4ed8"/>
     <circle cx="210" cy="45" r="2.5" fill="#1d4ed8"/>
-    <line x1="25"  y1="155" x2="100" y2="45" stroke="#2563eb" stroke-width="1.5"/>
-    <line x1="235" y1="155" x2="210" y2="45" stroke="#2563eb" stroke-width="1.5"/>
-    <line x1="235" y1="155" x2="285" y2="118" stroke="#2563eb" stroke-width="1.5"/>
 
-    <!-- C: ridge length -->
+    <!-- Front visible edges (drawn over translucent faces) -->
+    <line x1="25"  y1="155" x2="100" y2="45"  stroke="${sc}" stroke-width="1.5"/>
+    <line x1="235" y1="155" x2="210" y2="45"  stroke="${sc}" stroke-width="1.5"/>
+    <line x1="235" y1="155" x2="285" y2="118" stroke="${sc}" stroke-width="1.5"/>
+
+    <!-- R: ridge annotation -->
     <line x1="100" y1="30" x2="210" y2="30" stroke="${sc}" stroke-width="1.2"
           marker-start="url(#hp-ss)" marker-end="url(#hp-se)"/>
     <line x1="100" y1="45" x2="100" y2="32" stroke="${sc}" stroke-width="0.8" stroke-dasharray="3,3"/>
@@ -547,12 +680,12 @@
           marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
     <text x="130" y="187" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${lLabel}</text>
 
-    <!-- W: right eave edge B-C -->
+    <!-- W: right eave -->
     <line x1="243" y1="163" x2="293" y2="126" stroke="${dc}" stroke-width="1.2"
           marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
     <text x="295" y="155" text-anchor="start" fill="#475569" font-size="11" font-weight="600">${wLabel}</text>
 
-    ${roofAnnotation}
+    ${heightAnnotation}
   </svg>`;
     },
 
@@ -564,15 +697,24 @@
 
   function renderControls() {
     const wm = getWallMode();
-    const hipToggle = ['gable', 'leanto', 'hip'].includes(currentRoof) ? `
+    const wallToggle = ['gable', 'leanto', 'pitch'].includes(currentRoof) ? `
       <div class="btn-group hip-mode-toggle" role="group">
         <button type="button" class="btn btn-sm ${wm === 'roof'  ? 'btn-warning' : 'btn-outline-warning'}" onclick="setWallMode('roof')">Roof only</button>
         <button type="button" class="btn btn-sm ${wm === 'walls' ? 'btn-warning' : 'btn-outline-warning'}" onclick="setWallMode('walls')">Roof + Walls</button>
       </div>` : '';
 
+    const pitchTypeRow = currentRoof === 'pitch' ? `
+      <div class="controls-row" style="margin-bottom:0.75rem">
+        <div class="btn-group pitch-type-toggle" role="group">
+          <button type="button" class="btn btn-sm ${pitchMode === 'double' ? 'btn-info' : 'btn-outline-info'}" onclick="setPitchMode('double')">Double pitched</button>
+          <button type="button" class="btn btn-sm ${pitchMode === 'mono'   ? 'btn-info' : 'btn-outline-info'}" onclick="setPitchMode('mono')">Mono pitched</button>
+        </div>
+      </div>` : '';
+
     document.getElementById('controls-row').innerHTML = `
+      ${pitchTypeRow}
       <div class="controls-row">
-        ${hipToggle}
+        ${wallToggle}
         <div class="controls-right">
           <div class="btn-group" role="group">
             <button type="button" class="btn btn-sm ${currentUnit === 'metric'   ? 'btn-primary' : 'btn-outline-primary'}" onclick="setUnit('metric')">Metric (m)</button>
@@ -707,22 +849,20 @@
   }
 
   function renderDiagram() {
-    const d = diagrams[currentRoof];
-    // Collect any currently entered values to show live on the diagram
     const vals = {
-      length:  parseFloat(document.getElementById('field-length')?.value)  || null,
-      width:   parseFloat(document.getElementById('field-width')?.value)   || null,
-      height:  parseFloat(document.getElementById('field-height')?.value)  || null,
-      slope:   parseFloat(document.getElementById('field-slope')?.value)   || null,
-      length2: parseFloat(document.getElementById('field-length2')?.value) || null,
+      length:      parseFloat(document.getElementById('field-length')?.value)      || null,
+      width:       parseFloat(document.getElementById('field-width')?.value)       || null,
+      height:      parseFloat(document.getElementById('field-height')?.value)      || null,
+      slope:       parseFloat(document.getElementById('field-slope')?.value)       || null,
+      length2:     parseFloat(document.getElementById('field-length2')?.value)     || null,
       wallHeight:  parseFloat(document.getElementById('field-wallHeight')?.value)  || null,
       ridgeLength: parseFloat(document.getElementById('field-ridgeLength')?.value) || null,
     };
     const diagramEl = document.getElementById('diagram');
-    diagramEl.innerHTML = typeof d === 'function' ? d(measureMode, vals) : d;
-    // Apply roof-only class for wall-mode CSS transitions (instant, no animation)
-    const hasWallToggle = ['gable', 'leanto', 'hip'].includes(currentRoof);
-    diagramEl.classList.toggle('roof-only', hasWallToggle && getWallMode() === 'roof');
+    diagramEl.innerHTML = '';
+    if (typeof Diagrams3D !== 'undefined') {
+      Diagrams3D.render(currentRoof, diagramEl, measureMode, vals, getWallMode(), pitchMode);
+    }
   }
 
   // ── Actions ────────────────────────────────────────────────────────────────
@@ -758,10 +898,42 @@
     wallModes[currentRoof] = mode;
     hideResult();
     hideError();
-    document.getElementById('diagram').classList.toggle('roof-only', mode === 'roof');
     const wallRow = document.getElementById('wall-input-row');
     if (wallRow) wallRow.classList.toggle('wall-input-hidden', mode === 'roof');
     renderControls();
+    renderDiagram();
+  }
+
+  const PITCH_ICONS = {
+    double: `<svg width="56" height="40" viewBox="0 0 64 44" class="roof-card-icon">
+      <polygon points="16,6 48,6 60,22 48,38 16,38 4,22" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
+      <line x1="22" y1="22" x2="42" y2="22" stroke="#1d4ed8" stroke-width="2"/>
+      <line x1="22" y1="22" x2="16" y2="6"  stroke="#94a3b8" stroke-width="1"/>
+      <line x1="22" y1="22" x2="16" y2="38" stroke="#94a3b8" stroke-width="1"/>
+      <line x1="42" y1="22" x2="48" y2="6"  stroke="#94a3b8" stroke-width="1"/>
+      <line x1="42" y1="22" x2="48" y2="38" stroke="#94a3b8" stroke-width="1"/>
+    </svg>`,
+    mono: `<svg width="56" height="40" viewBox="0 0 64 44" class="roof-card-icon">
+      <polygon points="8,6 52,6 60,22 52,38 8,38" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
+      <line x1="8" y1="6" x2="8" y2="38" stroke="#2563eb" stroke-width="2"/>
+      <line x1="8" y1="22" x2="44" y2="22" stroke="#1d4ed8" stroke-width="2"/>
+      <line x1="44" y1="22" x2="52" y2="6"  stroke="#94a3b8" stroke-width="1"/>
+      <line x1="44" y1="22" x2="52" y2="38" stroke="#94a3b8" stroke-width="1"/>
+    </svg>`,
+  };
+
+  function updatePitchCardIcon() {
+    const el = document.getElementById('pitch-card-icon');
+    if (el) el.innerHTML = PITCH_ICONS[pitchMode] || PITCH_ICONS.double;
+  }
+
+  function setPitchMode(mode) {
+    pitchMode = mode;
+    hideResult();
+    hideError();
+    updatePitchCardIcon();
+    renderControls();
+    renderDiagram();
   }
 
   function calculate() {
@@ -847,8 +1019,8 @@
       return;
     }
 
-    // ── Hip Roof calculator (roof-only or roof + walls) ────────────────────────
-    if (currentRoof === 'hip') {
+    // ── Pitch Roof calculator (roof-only or roof + walls) ─────────────────────
+    if (currentRoof === 'pitch') {
       const L  = parseFloat(document.getElementById('field-length')?.value);
       const W  = parseFloat(document.getElementById('field-width')?.value);
       const C  = parseFloat(document.getElementById('field-ridgeLength')?.value);
@@ -879,12 +1051,23 @@
         }
       }
 
-      if (C >= L) {
-        showError('Ridge length (R) must be less than building length (L).');
-        return;
+      if (pitchMode === 'double') {
+        if (C >= L) {
+          showError('Ridge length (R) must be less than building length (L).');
+          return;
+        }
+      } else {
+        if (C > L) {
+          showError('Ridge length (R) cannot exceed building length (L).');
+          return;
+        }
       }
 
       const M3_PER_FT3 = 0.0283168;
+      const roofLabel  = pitchMode === 'mono' ? 'Mono Pitch' : 'Pitch Roof';
+      const roofVol    = pitchMode === 'mono'
+        ? W * A * (L + 2 * C) / 6
+        : W * A * (2 * L + C) / 6;
 
       if (getWallMode() === 'walls') {
         const hw = parseFloat(document.getElementById('field-wallHeight')?.value);
@@ -893,14 +1076,13 @@
           return;
         }
         const wallVol = L * W * hw;
-        const roofVol = W * A * (2 * L + C) / 6;
         const vTotal  = wallVol + roofVol;
         const altTotal = currentUnit === 'metric' ? vTotal / M3_PER_FT3 : vTotal * M3_PER_FT3;
         const altUnit  = currentUnit === 'metric' ? 'ft³' : 'm³';
         const derivedNote = measureMode === 'slope'
           ? `Derived roof height: ${formatNum(A)} ${u}  ·  Also: ${formatNum(altTotal)} ${altUnit}`
           : `Also: ${formatNum(altTotal)} ${altUnit}`;
-        document.getElementById('result-roof-label').textContent = 'Hip + Walls — Total Volume';
+        document.getElementById('result-roof-label').textContent = `${roofLabel} + Walls — Total Volume`;
         document.getElementById('result-value').textContent = formatNum(vTotal);
         document.getElementById('result-unit').textContent = vu;
         document.getElementById('result-alt').textContent = derivedNote;
@@ -912,22 +1094,21 @@
         bd.classList.remove('d-none');
         document.getElementById('result').classList.remove('d-none');
         lastResult = {
-          id: Date.now(), roofType: 'hip', label: '', unit: currentUnit,
+          id: Date.now(), roofType: 'pitch', label: '', unit: currentUnit,
           volumeM3: currentUnit === 'metric' ? vTotal : vTotal * M3_PER_FT3,
           displayVolume: vTotal, displayUnit: vu,
           derivedHeight: measureMode === 'slope' ? A : null,
           breakdown: { wall: wallVol, roof: roofVol },
           dims: { L, W, WH: hw, H: A, R: C }, formula: config.formulaText(),
-          wallMode: 'walls',
+          wallMode: 'walls', pitchMode,
         };
       } else {
-        const roofVol = W * A * (2 * L + C) / 6;
         const altTotal = currentUnit === 'metric' ? roofVol / M3_PER_FT3 : roofVol * M3_PER_FT3;
         const altUnit  = currentUnit === 'metric' ? 'ft³' : 'm³';
         const derivedNote = measureMode === 'slope'
           ? `Derived roof height: ${formatNum(A)} ${u}  ·  Also: ${formatNum(altTotal)} ${altUnit}`
           : `Also: ${formatNum(altTotal)} ${altUnit}`;
-        document.getElementById('result-roof-label').textContent = 'Hip Roof — Roof Volume';
+        document.getElementById('result-roof-label').textContent = `${roofLabel} — Roof Volume`;
         document.getElementById('result-value').textContent = formatNum(roofVol);
         document.getElementById('result-unit').textContent = vu;
         document.getElementById('result-alt').textContent = derivedNote;
@@ -935,13 +1116,13 @@
         document.getElementById('result-breakdown').classList.add('d-none');
         document.getElementById('result').classList.remove('d-none');
         lastResult = {
-          id: Date.now(), roofType: 'hip', label: '', unit: currentUnit,
+          id: Date.now(), roofType: 'pitch', label: '', unit: currentUnit,
           volumeM3: currentUnit === 'metric' ? roofVol : roofVol * M3_PER_FT3,
           displayVolume: roofVol, displayUnit: vu,
           derivedHeight: measureMode === 'slope' ? A : null,
           breakdown: null,
           dims: { L, W, H: A, R: C }, formula: config.formulaText(),
-          wallMode: 'roof',
+          wallMode: 'roof', pitchMode,
         };
       }
       document.getElementById('save-label').value = '';
@@ -1128,7 +1309,7 @@
     }
     section.classList.remove('d-none');
 
-    const roofLabels = { gable: 'Gable', extension: 'Extension', hip: 'Hip Roof', leanto: 'Lean-to', hipwalls: 'Hip + Walls' };
+    const roofLabels = { gable: 'Gable', extension: 'Extension', pitch: 'Pitch Roof', hip: 'Pitch Roof', leanto: 'Lean-to', hipwalls: 'Hip + Walls' };
 
     container.innerHTML = list.map((e, i) => {
       const dimParts = [];
@@ -1136,9 +1317,9 @@
         const u = e.unit === 'metric' ? 'm' : 'ft';
         if (e.roofType === 'extension') {
           dimParts.push(`W=${formatNum(e.dims.W)}${u}`, `L=${formatNum(e.dims.L ?? e.dims.L1)}${u}`, `PL=${formatNum(e.dims.PL ?? e.dims.L2)}${u}`, `H=${formatNum(e.dims.H)}${u}`);
-        } else if (e.roofType === 'hipwalls' || (e.roofType === 'hip' && (e.hipMode === 'walls' || e.wallMode === 'walls'))) {
+        } else if (e.roofType === 'hipwalls' || ((e.roofType === 'hip' || e.roofType === 'pitch') && (e.hipMode === 'walls' || e.wallMode === 'walls'))) {
           dimParts.push(`L=${formatNum(e.dims.L)}${u}`, `W=${formatNum(e.dims.W)}${u}`, `WH=${formatNum(e.dims.WH ?? e.dims.h)}${u}`, `H=${formatNum(e.dims.H ?? e.dims.A)}${u}`, `R=${formatNum(e.dims.R ?? e.dims.C)}${u}`);
-        } else if (e.roofType === 'hip') {
+        } else if (e.roofType === 'hip' || e.roofType === 'pitch') {
           dimParts.push(`L=${formatNum(e.dims.L)}${u}`, `W=${formatNum(e.dims.W)}${u}`, `H=${formatNum(e.dims.H ?? e.dims.A)}${u}`, `R=${formatNum(e.dims.R ?? e.dims.C)}${u}`);
         } else {
           if (e.dims.L)  dimParts.push(`L=${formatNum(e.dims.L)}${u}`);
@@ -1154,6 +1335,11 @@
           : `<div class="saved-breakdown">🏠 Gable ${formatNum(e.breakdown.gable)} ${e.displayUnit} · 🔺 Pyramid ${formatNum(e.breakdown.pyramid)} ${e.displayUnit}</div>`
         : '';
 
+      const isPitchType = e.roofType === 'pitch' || e.roofType === 'hip';
+      const metaLabel = isPitchType && e.pitchMode === 'mono'
+        ? 'Mono Pitch'
+        : (roofLabels[e.roofType] || e.roofType);
+
       return `
         <div class="saved-item" data-id="${e.id}">
           <div class="saved-item-left">
@@ -1164,7 +1350,7 @@
             <div class="saved-item-num">${i + 1}</div>
             <div>
               <div class="saved-item-label">${e.label}</div>
-              <div class="saved-item-meta">${roofLabels[e.roofType] || e.roofType}${dimParts.length ? ' · ' + dimParts.join(', ') : ''}</div>
+              <div class="saved-item-meta">${metaLabel}${dimParts.length ? ' · ' + dimParts.join(', ') : ''}</div>
               ${breakdownHtml}
             </div>
           </div>
@@ -1194,7 +1380,7 @@
     const list = loadSaved();
     if (list.length === 0) return;
 
-    const roofLabels = { gable: 'Gable Roof', extension: 'Roof Extension', hip: 'Hip Roof', leanto: 'Lean-to Roof', hipwalls: 'Hip + Walls' };
+    const roofLabels = { gable: 'Gable Roof', extension: 'Roof Extension', pitch: 'Pitch Roof', hip: 'Pitch Roof', leanto: 'Lean-to Roof', hipwalls: 'Hip + Walls' };
     const totalM3 = list.reduce((sum, e) => sum + (e.volumeM3 || 0), 0);
     const M3_PER_FT3 = 0.0283168;
     const totalDisplay = currentUnit === 'metric' ? totalM3 : totalM3 / M3_PER_FT3;
@@ -1207,9 +1393,9 @@
       if (e.dims) {
         if (e.roofType === 'extension') {
           dimParts.push(`W=${formatNum(e.dims.W)}${u}`, `L=${formatNum(e.dims.L ?? e.dims.L1)}${u}`, `PL=${formatNum(e.dims.PL ?? e.dims.L2)}${u}`, `H=${formatNum(e.dims.H)}${u}`);
-        } else if (e.roofType === 'hipwalls' || (e.roofType === 'hip' && (e.hipMode === 'walls' || e.wallMode === 'walls'))) {
+        } else if (e.roofType === 'hipwalls' || ((e.roofType === 'hip' || e.roofType === 'pitch') && (e.hipMode === 'walls' || e.wallMode === 'walls'))) {
           dimParts.push(`L=${formatNum(e.dims.L)}${u}`, `W=${formatNum(e.dims.W)}${u}`, `WH=${formatNum(e.dims.WH ?? e.dims.h)}${u}`, `H=${formatNum(e.dims.H ?? e.dims.A)}${u}`, `R=${formatNum(e.dims.R ?? e.dims.C)}${u}`);
-        } else if (e.roofType === 'hip') {
+        } else if (e.roofType === 'hip' || e.roofType === 'pitch') {
           dimParts.push(`L=${formatNum(e.dims.L)}${u}`, `W=${formatNum(e.dims.W)}${u}`, `H=${formatNum(e.dims.H ?? e.dims.A)}${u}`, `R=${formatNum(e.dims.R ?? e.dims.C)}${u}`);
         } else {
           if (e.dims.L)  dimParts.push(`L=${formatNum(e.dims.L)}${u}`);
@@ -1242,9 +1428,13 @@
         }
       }
 
-      // Type label — append "+ Walls" if applicable
+      // Type label — append "+ Walls" if applicable; handle pitchMode for pitch/hip entries
       const hasWalls = e.breakdown?.wall !== undefined;
-      const typeLabel = (roofLabels[e.roofType] || e.roofType) + (hasWalls ? ' + Walls' : '');
+      const isPitchType = e.roofType === 'pitch' || e.roofType === 'hip';
+      const baseLabel = isPitchType && e.pitchMode === 'mono'
+        ? 'Mono Pitch'
+        : (roofLabels[e.roofType] || e.roofType);
+      const typeLabel = baseLabel + (hasWalls ? ' + Walls' : '');
 
       const mainRowClass = breakdownRows ? ' class="has-breakdown"' : '';
       return `<tr${mainRowClass}>
@@ -1306,6 +1496,7 @@
   }
 
   // ── Init ───────────────────────────────────────────────────────────────────
+  updatePitchCardIcon();
   renderControls();
   renderDiagram();
   renderInputs();
