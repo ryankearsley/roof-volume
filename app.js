@@ -139,7 +139,7 @@
       slopeOffset: (W) => W / 2,
       formulaText: () => {
         const mono = pitchMode === 'mono';
-        const frac = mono ? 'L+2R' : '2L+R';
+        const frac = mono ? '2L+R' : '2L+R';
         if (getWallMode() === 'walls') {
           return measureMode === 'slope'
             ? `H = √(S² − (W/2)²)  →  V = W×L×WH + W×H×(${frac})/6`
@@ -152,544 +152,6 @@
     },
   };
 
-  // ── SVG Diagrams ───────────────────────────────────────────────────────────
-  // Each diagram function receives (mode, vals) where vals = { length, width, height, slope, length2 }
-  // vals fields are numbers or null. Labels show the entered value + unit when available.
-
-  const diagrams = {
-    gable: (mode, vals = {}) => {
-      const u = getUnitLabel();
-      const lbl = (v, name) => v ? `${name} = ${formatNum(v)} ${u}` : name;
-      const wLabel    = lbl(vals.width,      'Width (W)');
-      const lLabel    = lbl(vals.length,     'Length (L)');
-      const hLabel    = mode === 'slope' ? lbl(vals.slope, 'Slope (S)') : lbl(vals.height, 'Height (H)');
-      const wallLabel = lbl(vals.wallHeight, 'WH');
-      const dc = '#64748b';
-
-      const mS = mode === 'slope' ? 'gs-s' : 'g-s';
-      const mE = mode === 'slope' ? 'gs-e' : 'g-e';
-
-      const wallLayer = `
-    <g class="wall-layer">
-      <polygon points="55,155 175,155 175,205 55,205"
-               fill="#e0f2fe" stroke="#2563eb" stroke-width="1.5"/>
-      <polygon points="175,155 275,120 275,170 175,205"
-               fill="#bae6fd" stroke="#2563eb" stroke-width="1.5"/>
-      <line x1="155" y1="120" x2="155" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-      <line x1="55"  y1="205" x2="155" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-      <line x1="155" y1="170" x2="275" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-      <line x1="193" y1="157" x2="193" y2="203" stroke="${dc}" stroke-width="1.2"
-            marker-start="url(#${mS})" marker-end="url(#${mE})"/>
-      <line x1="175" y1="155" x2="196" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-      <line x1="175" y1="205" x2="196" y2="205" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-      <text x="202" y="183" text-anchor="start" fill="#475569" font-size="11" font-weight="600">${wallLabel}</text>
-    </g>`;
-
-      return mode === 'slope' ? `
-  <svg width="320" height="235" viewBox="-15 10 350 250" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <marker id="gs-e" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="#64748b"/>
-      </marker>
-      <marker id="gs-s" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="#64748b"/>
-      </marker>
-    </defs>
-    ${wallLayer}
-    <!-- Hidden edges -->
-    <line x1="55" y1="155" x2="155" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-    <line x1="155" y1="120" x2="275" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-    <line x1="155" y1="120" x2="215" y2="25"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-    <!-- Back gable face — drawn first, visible through translucent front slopes -->
-    <polygon points="155,120 275,120 215,25" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5" opacity="0.4"/>
-    <!-- Left roof slope — translucent -->
-    <polygon points="55,155 115,60 215,25 155,120" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5" opacity="0.78"/>
-    <!-- Right roof slope — translucent -->
-    <polygon points="175,155 115,60 215,25 275,120" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5" opacity="0.78"/>
-    <!-- Front gable triangle — slightly more opaque so it reads as a front face -->
-    <polygon points="55,155 175,155 115,60" fill="#eff6ff" stroke="#2563eb" stroke-width="2" opacity="0.88"/>
-    <!-- Dashed vertical height line and right-angle mark -->
-    <line x1="115" y1="62" x2="115" y2="153" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3"/>
-    <polyline points="115,147 107,147 107,155" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
-    <!-- Right bottom edge, back edge, ridge (drawn over translucent slopes) -->
-    <line x1="175" y1="155" x2="275" y2="120" stroke="#2563eb" stroke-width="1.5"/>
-    <line x1="275" y1="120" x2="215" y2="25"  stroke="#2563eb" stroke-width="1.5"/>
-    <line x1="115" y1="60"  x2="215" y2="25"  stroke="#1d4ed8" stroke-width="2"/>
-    <!-- Slope label -->
-    <text transform="translate(73,100) rotate(-58)" text-anchor="middle"
-          fill="#2563eb" font-size="11" font-weight="700">${hLabel}</text>
-    <!-- Width dimension -->
-    <line x1="55" y1="172" x2="175" y2="172" stroke="#64748b" stroke-width="1.2"
-          marker-start="url(#gs-s)" marker-end="url(#gs-e)"/>
-    <text x="115" y="187" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${wLabel}</text>
-    <!-- Length dimension -->
-    <line x1="181" y1="172" x2="281" y2="137" stroke="#64748b" stroke-width="1.2"
-          marker-start="url(#gs-s)" marker-end="url(#gs-e)"/>
-    <text x="231" y="168" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${lLabel}</text>
-  </svg>` : `
-  <svg width="320" height="235" viewBox="-15 10 350 250" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <marker id="g-e" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="#64748b"/>
-      </marker>
-      <marker id="g-s" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="#64748b"/>
-      </marker>
-    </defs>
-    ${wallLayer}
-    <!-- Hidden edges -->
-    <line x1="55" y1="155" x2="155" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-    <line x1="155" y1="120" x2="275" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-    <line x1="155" y1="120" x2="215" y2="25"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-    <!-- Back gable face — drawn first, visible through translucent front slopes -->
-    <polygon points="155,120 275,120 215,25" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5" opacity="0.4"/>
-    <!-- Left roof slope — translucent -->
-    <polygon points="55,155 115,60 215,25 155,120" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5" opacity="0.78"/>
-    <!-- Right roof slope — translucent -->
-    <polygon points="175,155 115,60 215,25 275,120" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5" opacity="0.78"/>
-    <!-- Front gable triangle — slightly more opaque so it reads as a front face -->
-    <polygon points="55,155 175,155 115,60" fill="#eff6ff" stroke="#2563eb" stroke-width="2" opacity="0.88"/>
-    <!-- Right bottom edge, back edge, ridge (drawn over translucent slopes) -->
-    <line x1="175" y1="155" x2="275" y2="120" stroke="#2563eb" stroke-width="1.5"/>
-    <line x1="275" y1="120" x2="215" y2="25"  stroke="#2563eb" stroke-width="1.5"/>
-    <!-- Ridge -->
-    <line x1="115" y1="60" x2="215" y2="25" stroke="#1d4ed8" stroke-width="2"/>
-    <!-- Width dimension -->
-    <line x1="55" y1="172" x2="175" y2="172" stroke="#64748b" stroke-width="1.2"
-          marker-start="url(#g-s)" marker-end="url(#g-e)"/>
-    <text x="115" y="187" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${wLabel}</text>
-    <!-- Height dimension -->
-    <line x1="36" y1="155" x2="36" y2="60" stroke="#64748b" stroke-width="1.2"
-          marker-start="url(#g-s)" marker-end="url(#g-e)"/>
-    <text x="22" y="112" text-anchor="middle" fill="#475569" font-size="11" font-weight="600"
-          transform="rotate(-90,22,112)">${hLabel}</text>
-    <!-- Length dimension -->
-    <line x1="181" y1="172" x2="281" y2="137" stroke="#64748b" stroke-width="1.2"
-          marker-start="url(#g-s)" marker-end="url(#g-e)"/>
-    <text x="231" y="168" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${lLabel}</text>
-  </svg>`;
-    },
-
-    /*
-      Extension diagram vertices (3D oblique projection):
-        A=(35,155)  far-left eave         B=(145,155) far-right eave
-        C=(90,60)   far ridge             D=(90,130)  mid-left eave
-        E=(200,130) mid-right eave        F=(145,35)  mid ridge
-        P=(175,20)  pyramid apex (junction ridge)
-      Depth steps: L1=(+55,−25), L2=(+30,−15)
-    */
-    extension: (mode, vals = {}) => {
-      const u = getUnitLabel();
-      const lbl = (v, name) => v ? `${name} = ${formatNum(v)} ${u}` : name;
-      const dimColour = '#64748b';
-      const sColour   = '#2563eb';
-
-      const wLabel  = lbl(vals.width,   'W');
-      const l1Label = lbl(vals.length,  'L');
-      const l2Label = lbl(vals.length2, 'PL');
-      const hLabel  = mode === 'slope'
-        ? lbl(vals.slope,  'S')
-        : lbl(vals.height, 'H');
-      const markers = `
-        <defs>
-          <marker id="ex-e" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dimColour}"/>
-          </marker>
-          <marker id="ex-s" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dimColour}"/>
-          </marker>
-          <marker id="ex-se" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sColour}"/>
-          </marker>
-          <marker id="ex-ss" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sColour}"/>
-          </marker>
-        </defs>`;
-
-      const heightAnnotation = mode === 'slope' ? `
-        <!-- S: hip rafter from E to P, in blue -->
-        <line x1="200" y1="130" x2="175" y2="22"
-              stroke="${sColour}" stroke-width="2"
-              marker-start="url(#ex-ss)" marker-end="url(#ex-se)"/>
-        <text x="202" y="72" fill="${sColour}" font-size="11" font-weight="700">${hLabel}</text>
-        <text x="202" y="85" fill="${sColour}" font-size="10">(outer corner → apex)</text>
-        <text x="-60" y="108" fill="#475569" font-size="10" font-style="italic">H derived from S</text>
-      ` : `
-        <!-- H: left-side vertical arrow from eave to ridge -->
-        <line x1="-45" y1="155" x2="-45" y2="62"
-              stroke="${dimColour}" stroke-width="1.2"
-              marker-start="url(#ex-s)" marker-end="url(#ex-e)"/>
-        <line x1="35" y1="155" x2="-42" y2="155" stroke="${dimColour}" stroke-width="0.8" stroke-dasharray="3,3"/>
-        <line x1="90" y1="60"  x2="-42" y2="60"  stroke="${dimColour}" stroke-width="0.8" stroke-dasharray="3,3"/>
-        <text transform="translate(-58,108) rotate(-90)" text-anchor="middle"
-              fill="#475569" font-size="11" font-weight="600">${hLabel}</text>
-      `;
-
-      return `
-      <svg width="320" height="195" viewBox="-80 0 370 210" xmlns="http://www.w3.org/2000/svg">
-        ${markers}
-
-        <!-- Hidden edges (dashed) -->
-        <line x1="35"  y1="155" x2="90"  y2="130" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <line x1="90"  y1="130" x2="200" y2="130" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <line x1="90"  y1="130" x2="175" y2="20"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-
-        <!-- Pyramid right face: E-F-P -->
-        <polygon points="200,130 145,35 175,20" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5"/>
-
-        <!-- Gable right face: B-E-F-C -->
-        <polygon points="145,155 200,130 145,35 90,60" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
-
-        <!-- Gable left face: A-D-F-C (slightly faded) -->
-        <polygon points="35,155 90,130 145,35 90,60" fill="#eff6ff" stroke="#2563eb" stroke-width="1" opacity="0.7"/>
-
-        <!-- Gable front face: A-B-C -->
-        <polygon points="35,155 145,155 90,60" fill="#bfdbfe" stroke="#2563eb" stroke-width="2"/>
-
-        <!-- Ridge: C→F→P -->
-        <line x1="90"  y1="60" x2="145" y2="35" stroke="#1d4ed8" stroke-width="2"/>
-        <line x1="145" y1="35" x2="175" y2="20" stroke="#1d4ed8" stroke-width="1.5" stroke-dasharray="5,3"/>
-        <circle cx="175" cy="20" r="3" fill="#1d4ed8"/>
-
-        <!-- "Main house" junction wall (context) -->
-        <line x1="120" y1="115" x2="230" y2="115" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3"/>
-        <text x="172" y="128" text-anchor="middle" fill="#94a3b8" font-size="9">main house wall</text>
-
-        <!-- W: arrow below front face -->
-        <line x1="35" y1="173" x2="145" y2="173"
-              stroke="${dimColour}" stroke-width="1.2"
-              marker-start="url(#ex-s)" marker-end="url(#ex-e)"/>
-        <text x="90" y="186" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${wLabel}</text>
-
-        <!-- L1: arrow along right eave B→E direction, offset below-right -->
-        <line x1="153" y1="163" x2="208" y2="138"
-              stroke="${dimColour}" stroke-width="1.2"
-              marker-start="url(#ex-s)" marker-end="url(#ex-e)"/>
-        <text x="195" y="162" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${l1Label}</text>
-
-        <!-- L2: arrow along E→junction right, offset below-right -->
-        <line x1="212" y1="135" x2="242" y2="120"
-              stroke="${dimColour}" stroke-width="1.2"
-              marker-start="url(#ex-s)" marker-end="url(#ex-e)"/>
-        <text x="242" y="140" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${l2Label}</text>
-
-        ${heightAnnotation}
-      </svg>`;
-    },
-
-    leanto: (mode, vals = {}) => {
-      const u = getUnitLabel();
-      const lbl = (v, name) => v ? `${name} = ${formatNum(v)} ${u}` : name;
-      const wLabel    = lbl(vals.width,      'Width (W)');
-      const lLabel    = lbl(vals.length,     'Length (L)');
-      const hLabel    = mode === 'slope' ? lbl(vals.slope, 'Slope (S)') : lbl(vals.height, 'Height (H)');
-      const wallLabel = lbl(vals.wallHeight, 'WH');
-      const dc = '#64748b', sc = '#2563eb';
-
-      const heightAnnotation = mode === 'slope' ? `
-    <!-- Slope: A(55,155) to C(175,55) along front face -->
-    <line x1="57" y1="153" x2="173" y2="57"
-          stroke="${sc}" stroke-width="1.8" stroke-dasharray="6,3"
-          marker-start="url(#lt-ss)" marker-end="url(#lt-se)"/>
-    <text transform="translate(102,96) rotate(-40)" text-anchor="middle"
-          fill="${sc}" font-size="11" font-weight="700">${hLabel}</text>
-  ` : `
-    <!-- Height: right of C(175,55)→B(175,155), external right -->
-    <line x1="193" y1="155" x2="193" y2="55" stroke="${dc}" stroke-width="1.2"
-          marker-start="url(#lt-s)" marker-end="url(#lt-e)"/>
-    <line x1="175" y1="155" x2="196" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-    <line x1="175" y1="55"  x2="196" y2="55"  stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-    <text x="207" y="105" text-anchor="middle" fill="#475569" font-size="11" font-weight="600"
-          transform="rotate(-90,207,105)">${hLabel}</text>
-  `;
-
-      return `
-  <svg width="320" height="235" viewBox="-5 5 340 250" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <marker id="lt-e" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
-      </marker>
-      <marker id="lt-s" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
-      </marker>
-      <marker id="lt-se" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
-      </marker>
-      <marker id="lt-ss" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
-      </marker>
-    </defs>
-
-    <!-- WALL LAYER (fades out in roof-only mode) -->
-    <g class="wall-layer">
-      <polygon points="55,155 175,155 175,205 55,205"
-               fill="#e0f2fe" stroke="#2563eb" stroke-width="1.5"/>
-      <polygon points="175,155 275,120 275,170 175,205"
-               fill="#bae6fd" stroke="#2563eb" stroke-width="1.5"/>
-      <line x1="155" y1="120" x2="155" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-      <line x1="55"  y1="205" x2="155" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-      <line x1="155" y1="170" x2="275" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-      <line x1="193" y1="157" x2="193" y2="203" stroke="${dc}" stroke-width="1.2"
-            marker-start="url(#lt-s)" marker-end="url(#lt-e)"/>
-      <line x1="175" y1="155" x2="196" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-      <line x1="175" y1="205" x2="196" y2="205" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-      <text x="202" y="183" text-anchor="start" fill="#475569" font-size="11" font-weight="600">${wallLabel}</text>
-    </g>
-
-    <!-- ROOF (always visible) -->
-    <line x1="55"  y1="155" x2="155" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-    <line x1="155" y1="120" x2="275" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-    <polygon points="155,120 275,120 275,20" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5" opacity="0.5"/>
-    <polygon points="55,155 175,55 275,20 155,120" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
-    <polygon points="175,155 175,55 275,20 275,120" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
-    <polygon points="55,155 175,155 175,55" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
-
-    <!-- Width: below A-B -->
-    <line x1="55" y1="172" x2="175" y2="172" stroke="${dc}" stroke-width="1.2"
-          marker-start="url(#lt-s)" marker-end="url(#lt-e)"/>
-    <text x="115" y="187" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${wLabel}</text>
-
-    <!-- Length: along B-E offset -->
-    <line x1="183" y1="163" x2="283" y2="128" stroke="${dc}" stroke-width="1.2"
-          marker-start="url(#lt-s)" marker-end="url(#lt-e)"/>
-    <text x="248" y="158" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${lLabel}</text>
-
-    ${heightAnnotation}
-  </svg>`;
-    },
-
-    pitch: (mode, vals = {}) => {
-      const u = getUnitLabel();
-      const lbl = (v, name) => v ? `${name} = ${formatNum(v)} ${u}` : name;
-      const lLabel    = lbl(vals.length,      'L');
-      const wLabel    = lbl(vals.width,       'W');
-      const aLabel    = mode === 'slope' ? lbl(vals.slope, 'Slope (S)') : lbl(vals.height, 'H');
-      const wallLabel = lbl(vals.wallHeight,  'WH');
-      const cLabel    = lbl(vals.ridgeLength, 'R');
-      const dc = '#64748b', sc = '#2563eb';
-      const isDouble  = pitchMode === 'double';
-
-      // ── MONO PITCH: hip end faces viewer, gable at back ────────────────────
-      // Same perspective/orientation as the gable diagram, but:
-      //   - Front face = hip (sloped triangle, apex set back & right in perspective)
-      //   - Back face  = gable wall (faint, like back gable in gable diagram)
-      //
-      // Vertices (same front/back eave corners as gable):
-      //   FrontL=(55,155)  FrontR=(175,155)  BackL=(155,120)  BackR=(275,120)
-      //   hipApex=(138,52)   ← apex offset right (+23) vs centred gable peak (115,60)
-      //   gablePeak=(238,17) ← hipApex + full-depth perspective offset (+100,-35)
-      //   Ridge: hipApex → gablePeak
-      if (!isDouble) {
-        const ms = 'mp-s', me = 'mp-e', msc = 'mp-sc', mec = 'mp-ec';
-        const monoWLabel = lbl(vals.width,    'Width (W)');
-        const monoLLabel = lbl(vals.length,   'Length (L)');
-        const monoHLabel = mode === 'slope' ? lbl(vals.slope, 'Slope (S)') : lbl(vals.height, 'Height (H)');
-
-        const monoWallLayer = `
-    <g class="wall-layer">
-      <polygon points="55,155 175,155 175,205 55,205"
-               fill="#e0f2fe" stroke="#2563eb" stroke-width="1.5"/>
-      <polygon points="175,155 275,120 275,170 175,205"
-               fill="#bae6fd" stroke="#2563eb" stroke-width="1.5"/>
-      <line x1="155" y1="120" x2="155" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-      <line x1="55"  y1="205" x2="155" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-      <line x1="155" y1="170" x2="275" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-      <line x1="193" y1="157" x2="193" y2="203" stroke="${dc}" stroke-width="1.2"
-            marker-start="url(#${ms})" marker-end="url(#${me})"/>
-      <line x1="175" y1="155" x2="196" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-      <line x1="175" y1="205" x2="196" y2="205" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-      <text x="202" y="183" text-anchor="start" fill="#475569" font-size="11" font-weight="600">${wallLabel}</text>
-    </g>`;
-
-        const monoHeightAnnotation = mode === 'slope' ? `
-    <!-- Slope dashed drop line from hip apex, right-angle mark at base -->
-    <line x1="138" y1="54" x2="138" y2="153" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3"/>
-    <polyline points="138,148 130,148 130,155" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
-    <!-- Slope label along left edge of hip face -->
-    <text transform="translate(91,104) rotate(-51)" text-anchor="middle"
-          fill="${sc}" font-size="11" font-weight="700">${monoHLabel}</text>
-` : `
-    <!-- Height dimension line left of hip face -->
-    <line x1="36" y1="155" x2="36" y2="52" stroke="${dc}" stroke-width="1.2"
-          marker-start="url(#${ms})" marker-end="url(#${me})"/>
-    <line x1="55"  y1="155" x2="33" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-    <line x1="36"  y1="52"  x2="138" y2="52" stroke="#94a3b8" stroke-width="0.8" stroke-dasharray="3,3"/>
-    <text x="22" y="104" text-anchor="middle" fill="#475569" font-size="11" font-weight="600"
-          transform="rotate(-90,22,104)">${monoHLabel}</text>
-`;
-
-        return `
-  <svg width="320" height="235" viewBox="-15 0 350 260" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <marker id="${me}"  markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
-      </marker>
-      <marker id="${ms}"  markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
-      </marker>
-      <marker id="${mec}" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
-      </marker>
-      <marker id="${msc}" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
-      </marker>
-    </defs>
-    ${monoWallLayer}
-    <!-- Hidden back edges (behind slopes) -->
-    <line x1="55"  y1="155" x2="155" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-    <line x1="155" y1="120" x2="275" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-    <line x1="155" y1="120" x2="238" y2="17"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-    <!-- Back gable face — faint, drawn first (same style as gable diagram back face) -->
-    <polygon points="155,120 275,120 238,17" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5" opacity="0.4"/>
-    <!-- Left slope -->
-    <polygon points="55,155 138,52 238,17 155,120" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5" opacity="0.78"/>
-    <!-- Right slope -->
-    <polygon points="175,155 138,52 238,17 275,120" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5" opacity="0.78"/>
-    <!-- Hip face — drawn last so it's prominent; apex offset right signals sloped (not vertical) -->
-    <polygon points="55,155 175,155 138,52" fill="#eff6ff" stroke="#2563eb" stroke-width="2" opacity="0.88"/>
-    <!-- Right eave, right back edge (solid visible lines) -->
-    <line x1="175" y1="155" x2="275" y2="120" stroke="${sc}" stroke-width="1.5"/>
-    <line x1="275" y1="120" x2="238" y2="17"  stroke="${sc}" stroke-width="1.5"/>
-    <!-- Ridge -->
-    <line x1="138" y1="52"  x2="238" y2="17"  stroke="#1d4ed8" stroke-width="2"/>
-    <!-- R: label above ridge midpoint, rotated to follow it -->
-    <text transform="translate(185,26) rotate(-19)" text-anchor="middle"
-          fill="${sc}" font-size="11" font-weight="700">${cLabel}</text>
-    <!-- Width dimension -->
-    <line x1="55"  y1="172" x2="175" y2="172" stroke="${dc}" stroke-width="1.2"
-          marker-start="url(#${ms})" marker-end="url(#${me})"/>
-    <text x="115" y="187" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${monoWLabel}</text>
-    <!-- Length dimension -->
-    <line x1="181" y1="172" x2="281" y2="137" stroke="${dc}" stroke-width="1.2"
-          marker-start="url(#${ms})" marker-end="url(#${me})"/>
-    <text x="231" y="168" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${monoLLabel}</text>
-    ${monoHeightAnnotation}
-  </svg>`;
-      }
-
-      // ── DOUBLE PITCH: 3D perspective (both ends hipped) ─────────────────────
-      // Vertices (3D perspective, same for both modes):
-      // FL=(25,155)  FR=(235,155)  BR=(285,118)  BL=(75,118)
-      // leftPt=(100,45)  rightPt=(210,45)  Ridge: leftPt→rightPt
-
-      const wallLayer = `
-    <g class="wall-layer">
-      <polygon points="25,155 235,155 235,205 25,205"
-               fill="#e0f2fe" stroke="#2563eb" stroke-width="1.5"/>
-      <polygon points="235,155 285,118 285,168 235,205"
-               fill="#bae6fd" stroke="#2563eb" stroke-width="1.5"/>
-      <line x1="75" y1="118" x2="75" y2="168"  stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-      <line x1="25" y1="205" x2="75" y2="168"  stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-      <line x1="75" y1="168" x2="285" y2="168" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-      <line x1="248" y1="157" x2="248" y2="203" stroke="${dc}" stroke-width="1.2"
-            marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
-      <line x1="235" y1="155" x2="251" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-      <line x1="235" y1="205" x2="251" y2="205" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-      <text x="256" y="183" text-anchor="start" fill="#475569" font-size="11" font-weight="600">${wallLabel}</text>
-    </g>`;
-
-      const heightAnnotation = mode === 'slope' ? `
-    <line x1="130" y1="153" x2="155" y2="47"
-          stroke="${sc}" stroke-width="2" stroke-dasharray="6,3"
-          marker-start="url(#hp-ss)" marker-end="url(#hp-se)"/>
-    <polyline points="130,149 138,151 136,157" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
-    <text x="96" y="91" text-anchor="middle" fill="${sc}" font-size="11" font-weight="700"
-          transform="rotate(-77,96,91)">${aLabel}</text>
-` : `
-    <line x1="3" y1="45" x2="3" y2="155" stroke="${dc}" stroke-width="1.2"
-          marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
-    <line x1="25"  y1="155" x2="0"  y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-    <line x1="100" y1="45"  x2="0"  y2="45"  stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-    <text x="-9" y="100" text-anchor="middle" fill="#475569" font-size="11" font-weight="600"
-          transform="rotate(-90,-9,100)">${aLabel}</text>
-`;
-
-      // Left end face: HIP (sloped, blue) or GABLE (light, solid, drawn AFTER front slope so it's visible)
-      const leftHipFace = `
-    <!-- Left hip end — sloped, same colour family as roof -->
-    <polygon points="25,155 75,118 100,45"
-             fill="#dbeafe" stroke="#2563eb" stroke-width="1.5" opacity="0.85"/>
-`;
-      const leftGableFace = `
-    <!-- Left gable end — drawn after front slope so it stands clear as a front-facing wall -->
-    <polygon points="25,155 75,118 100,45"
-             fill="#eff6ff" stroke="#2563eb" stroke-width="2" opacity="0.88"/>
-    <!-- Back ridge of gable — solid edge, no longer hidden behind the face -->
-    <line x1="75" y1="118" x2="100" y2="45" stroke="#2563eb" stroke-width="1.5"/>
-`;
-
-      return `
-  <svg width="320" height="220" viewBox="-30 5 340 235" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <marker id="hp-e" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
-      </marker>
-      <marker id="hp-s" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
-      </marker>
-      <marker id="hp-se" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
-      </marker>
-      <marker id="hp-ss" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
-      </marker>
-    </defs>
-
-    ${wallLayer}
-
-    <!-- Back hidden edges (dashed) -->
-    <line x1="75"  y1="118" x2="285" y2="118" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-    ${isDouble ? `<line x1="75" y1="118" x2="100" y2="45" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>` : ''}
-    <line x1="285" y1="118" x2="210" y2="45"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-
-    <!-- BACK SLOPE — drawn first, translucent so front slope shows over it -->
-    <polygon points="75,118 285,118 210,45 100,45"
-             fill="#93c5fd" stroke="#2563eb" stroke-width="1" opacity="0.35"/>
-
-    <!-- Right hip end — same for both modes (always hipped on right) -->
-    <polygon points="235,155 285,118 210,45"
-             fill="#dbeafe" stroke="#2563eb" stroke-width="1.5" opacity="0.85"/>
-
-    ${isDouble ? leftHipFace : ''}
-
-    <!-- FRONT SLOPE — slightly translucent so back slope is faintly visible through it -->
-    <polygon points="25,155 235,155 210,45 100,45"
-             fill="#bfdbfe" stroke="#2563eb" stroke-width="2" opacity="0.78"/>
-
-    ${!isDouble ? leftGableFace : ''}
-
-    <!-- Ridge -->
-    <line x1="100" y1="45" x2="210" y2="45" stroke="#1d4ed8" stroke-width="2.5"/>
-    <circle cx="100" cy="45" r="2.5" fill="#1d4ed8"/>
-    <circle cx="210" cy="45" r="2.5" fill="#1d4ed8"/>
-
-    <!-- Front visible edges (drawn over translucent faces) -->
-    <line x1="25"  y1="155" x2="100" y2="45"  stroke="${sc}" stroke-width="1.5"/>
-    <line x1="235" y1="155" x2="210" y2="45"  stroke="${sc}" stroke-width="1.5"/>
-    <line x1="235" y1="155" x2="285" y2="118" stroke="${sc}" stroke-width="1.5"/>
-
-    <!-- R: ridge annotation -->
-    <line x1="100" y1="30" x2="210" y2="30" stroke="${sc}" stroke-width="1.2"
-          marker-start="url(#hp-ss)" marker-end="url(#hp-se)"/>
-    <line x1="100" y1="45" x2="100" y2="32" stroke="${sc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-    <line x1="210" y1="45" x2="210" y2="32" stroke="${sc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-    <text x="155" y="24" text-anchor="middle" fill="${sc}" font-size="11" font-weight="700">${cLabel}</text>
-
-    <!-- L: below front eave -->
-    <line x1="25" y1="173" x2="235" y2="173" stroke="${dc}" stroke-width="1.2"
-          marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
-    <text x="130" y="187" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${lLabel}</text>
-
-    <!-- W: right eave -->
-    <line x1="243" y1="163" x2="293" y2="126" stroke="${dc}" stroke-width="1.2"
-          marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
-    <text x="295" y="155" text-anchor="start" fill="#475569" font-size="11" font-weight="600">${wLabel}</text>
-
-    ${heightAnnotation}
-  </svg>`;
-    },
-
-  };
 
   // ── Render helpers ─────────────────────────────────────────────────────────
   function getUnitLabel() { return currentUnit === 'metric' ? 'm' : 'ft'; }
@@ -697,32 +159,31 @@
 
   function renderControls() {
     const wm = getWallMode();
+
+    const pitchToggle = currentRoof === 'pitch' ? `
+      <div class="btn-group pitch-type-toggle" role="group">
+        <button type="button" class="btn btn-sm ${pitchMode === 'double' ? 'btn-info' : 'btn-outline-info'}" onclick="setPitchMode('double')">Double</button>
+        <button type="button" class="btn btn-sm ${pitchMode === 'mono'   ? 'btn-info' : 'btn-outline-info'}" onclick="setPitchMode('mono')">Mono</button>
+      </div>` : '';
+
     const wallToggle = ['gable', 'leanto', 'pitch'].includes(currentRoof) ? `
       <div class="btn-group hip-mode-toggle" role="group">
         <button type="button" class="btn btn-sm ${wm === 'roof'  ? 'btn-warning' : 'btn-outline-warning'}" onclick="setWallMode('roof')">Roof only</button>
-        <button type="button" class="btn btn-sm ${wm === 'walls' ? 'btn-warning' : 'btn-outline-warning'}" onclick="setWallMode('walls')">Roof + Walls</button>
-      </div>` : '';
-
-    const pitchTypeRow = currentRoof === 'pitch' ? `
-      <div class="controls-row" style="margin-bottom:0.75rem">
-        <div class="btn-group pitch-type-toggle" role="group">
-          <button type="button" class="btn btn-sm ${pitchMode === 'double' ? 'btn-info' : 'btn-outline-info'}" onclick="setPitchMode('double')">Double pitched</button>
-          <button type="button" class="btn btn-sm ${pitchMode === 'mono'   ? 'btn-info' : 'btn-outline-info'}" onclick="setPitchMode('mono')">Mono pitched</button>
-        </div>
+        <button type="button" class="btn btn-sm ${wm === 'walls' ? 'btn-warning' : 'btn-outline-warning'}" onclick="setWallMode('walls')">+ Walls</button>
       </div>` : '';
 
     document.getElementById('controls-row').innerHTML = `
-      ${pitchTypeRow}
       <div class="controls-row">
+        ${pitchToggle}
         ${wallToggle}
         <div class="controls-right">
           <div class="btn-group" role="group">
-            <button type="button" class="btn btn-sm ${currentUnit === 'metric'   ? 'btn-primary' : 'btn-outline-primary'}" onclick="setUnit('metric')">Metric (m)</button>
-            <button type="button" class="btn btn-sm ${currentUnit === 'imperial' ? 'btn-primary' : 'btn-outline-primary'}" onclick="setUnit('imperial')">Imperial (ft)</button>
+            <button type="button" class="btn btn-sm ${currentUnit === 'metric'   ? 'btn-primary' : 'btn-outline-primary'}" onclick="setUnit('metric')">Metric</button>
+            <button type="button" class="btn btn-sm ${currentUnit === 'imperial' ? 'btn-primary' : 'btn-outline-primary'}" onclick="setUnit('imperial')">Imperial</button>
           </div>
           <div class="btn-group" role="group">
-            <button type="button" class="btn btn-sm ${measureMode === 'vertical' ? 'btn-primary' : 'btn-outline-primary'}" onclick="setMeasureMode('vertical')">Vertical height</button>
-            <button type="button" class="btn btn-sm ${measureMode === 'slope'    ? 'btn-primary' : 'btn-outline-primary'}" onclick="setMeasureMode('slope')">${currentRoof === 'extension' ? 'Hip rafter (S)' : 'Slope length'}</button>
+            <button type="button" class="btn btn-sm ${measureMode === 'vertical' ? 'btn-primary' : 'btn-outline-primary'}" onclick="setMeasureMode('vertical')">Vertical</button>
+            <button type="button" class="btn btn-sm ${measureMode === 'slope'    ? 'btn-primary' : 'btn-outline-primary'}" onclick="setMeasureMode('slope')">${currentRoof === 'extension' ? 'Hip rafter' : 'Slope'}</button>
           </div>
         </div>
       </div>`;
@@ -906,19 +367,16 @@
 
   const PITCH_ICONS = {
     double: `<svg width="56" height="40" viewBox="0 0 64 44" class="roof-card-icon">
-      <polygon points="16,6 48,6 60,22 48,38 16,38 4,22" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
-      <line x1="22" y1="22" x2="42" y2="22" stroke="#1d4ed8" stroke-width="2"/>
-      <line x1="22" y1="22" x2="16" y2="6"  stroke="#94a3b8" stroke-width="1"/>
-      <line x1="22" y1="22" x2="16" y2="38" stroke="#94a3b8" stroke-width="1"/>
-      <line x1="42" y1="22" x2="48" y2="6"  stroke="#94a3b8" stroke-width="1"/>
-      <line x1="42" y1="22" x2="48" y2="38" stroke="#94a3b8" stroke-width="1"/>
+      <polygon points="17,30 50,30 44,16 11,16" fill="rgba(147,197,253,0.32)" stroke="#2563eb" stroke-width="1.2"/>
+      <polygon points="5,38 38,38 44,16 11,16"  fill="rgba(191,219,254,0.88)" stroke="#2563eb" stroke-width="1.4"/>
+      <polygon points="5,38 17,30 11,16"         fill="rgba(219,234,254,0.92)" stroke="#2563eb" stroke-width="1.4"/>
+      <polygon points="38,38 50,30 44,16"        fill="rgba(147,197,253,0.48)" stroke="#2563eb" stroke-width="1.2"/>
+      <line x1="11" y1="16" x2="44" y2="16" stroke="#1d4ed8" stroke-width="2"/>
     </svg>`,
     mono: `<svg width="56" height="40" viewBox="0 0 64 44" class="roof-card-icon">
-      <polygon points="8,6 52,6 60,22 52,38 8,38" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
-      <line x1="8" y1="6" x2="8" y2="38" stroke="#2563eb" stroke-width="2"/>
-      <line x1="8" y1="22" x2="44" y2="22" stroke="#1d4ed8" stroke-width="2"/>
-      <line x1="44" y1="22" x2="52" y2="6"  stroke="#94a3b8" stroke-width="1"/>
-      <line x1="44" y1="22" x2="52" y2="38" stroke="#94a3b8" stroke-width="1"/>
+      <polygon points="5,38 17,30 17,16"          fill="rgba(219,234,254,0.92)" stroke="#2563eb" stroke-width="1.4"/>
+      <polygon points="5,38 38,38 50,16 17,16"    fill="rgba(191,219,254,0.88)" stroke="#2563eb" stroke-width="1.4"/>
+      <line x1="17" y1="16" x2="50" y2="16" stroke="#1d4ed8" stroke-width="2"/>
     </svg>`,
   };
 
@@ -1066,7 +524,7 @@
       const M3_PER_FT3 = 0.0283168;
       const roofLabel  = pitchMode === 'mono' ? 'Mono Pitch' : 'Pitch Roof';
       const roofVol    = pitchMode === 'mono'
-        ? W * A * (L + 2 * C) / 6
+        ? W * A * (2 * L + C) / 6
         : W * A * (2 * L + C) / 6;
 
       if (getWallMode() === 'walls') {

@@ -154,15 +154,15 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
   margin-bottom: 1.5rem;
 }
 
 .controls-right {
   display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  flex-direction: row;
+  gap: 0.5rem;
   align-items: center;
   margin-left: auto;
 }
@@ -209,11 +209,6 @@ body {
   border-radius: 8px;
   display: block;
   max-width: 100%;
-}
-
-.diagram-wrap svg {
-  max-width: 100%;
-  height: auto;
 }
 
 /* Three.js CSS2D labels */
@@ -742,15 +737,6 @@ body {
   .roof-card { max-width: none; }
 }
 
-/* ── Pitch / Hip diagram wall layer transition ──────────────────────────── */
-.wall-layer {
-  transition: opacity 0.45s ease;
-}
-#diagram.roof-only .wall-layer {
-  opacity: 0;
-  pointer-events: none;
-}
-
 /* ── Pitch wall height input row transition ─────────────────────────────── */
 .wall-input-row {
   overflow: hidden;
@@ -808,4 +794,135 @@ body {
 .pitch-type-toggle .btn-outline-info:hover {
   background-color: #ecfeff;
   color: #0e7490;
+}
+
+/* ─────────────────────────────────────────────
+   Animations & transitions
+───────────────────────────────────────────── */
+html { scroll-behavior: smooth; }
+
+/* Page-load entrance */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.section-block {
+  animation: fadeInUp 0.38s ease both;
+}
+.calc-card {
+  animation: fadeInUp 0.42s ease both 0.07s;
+}
+
+/* Roof card lift on hover */
+.roof-card {
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s, transform 0.18s;
+}
+.roof-card:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 6px 18px rgba(37,99,235,0.13);
+}
+.roof-card.active {
+  transform: translateY(-1px);
+}
+
+/* Roof card icon smooth morph */
+.roof-card-icon {
+  transition: transform 0.22s ease;
+}
+.roof-card:hover .roof-card-icon {
+  transform: scale(1.07);
+}
+
+/* Result reveal */
+@keyframes resultReveal {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+#result:not(.d-none) {
+  animation: resultReveal 0.38s cubic-bezier(0.34,1.2,0.64,1) both;
+}
+
+/* Saved section reveal */
+#saved-section:not(.d-none) {
+  animation: fadeInUp 0.32s ease both;
+}
+
+/* Saved items stagger */
+.saved-item {
+  animation: fadeInUp 0.28s ease both;
+  transition: box-shadow 0.18s, transform 0.15s;
+}
+.saved-item:hover {
+  box-shadow: 0 4px 14px rgba(37,99,235,0.08);
+  transform: translateY(-1px);
+}
+
+/* Calculate button idle pulse + active press */
+@keyframes btnGlow {
+  0%, 100% { box-shadow: 0 2px 8px rgba(37,99,235,0.28); }
+  50%       { box-shadow: 0 4px 22px rgba(37,99,235,0.48); }
+}
+.calc-btn {
+  animation: btnGlow 3.2s ease-in-out infinite;
+  transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
+}
+.calc-btn:hover {
+  animation: none;
+  opacity: 0.93;
+  box-shadow: 0 6px 20px rgba(37,99,235,0.4);
+  transform: translateY(-1px);
+}
+.calc-btn:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 0 1px 6px rgba(37,99,235,0.25);
+  animation: none;
+}
+
+/* Diagram fade-in when refreshed */
+@keyframes diagramIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.diagram-wrap {
+  transition: background 0.2s;
+}
+.diagram-wrap canvas {
+  animation: diagramIn 0.3s ease both;
+}
+
+/* Input focus ring enhancement */
+.calc-card .form-control {
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+/* Header icon pulse-in on load */
+@keyframes iconPop {
+  0%   { transform: scale(0.7); opacity: 0; }
+  70%  { transform: scale(1.1); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+.header-icon {
+  animation: iconPop 0.5s cubic-bezier(0.34,1.3,0.64,1) both 0.1s;
+}
+
+/* Result value count-up feel */
+.result-value {
+  transition: transform 0.2s ease;
+}
+.result-card:hover .result-value {
+  transform: scale(1.03);
+}
+
+/* Section label slide in */
+.section-label {
+  animation: fadeInUp 0.3s ease both;
+}
+
+/* Smooth tooltip btn */
+.field-tooltip-btn {
+  transition: background 0.15s, color 0.15s, transform 0.12s;
+}
+.field-tooltip-btn:hover {
+  transform: scale(1.15);
 }
