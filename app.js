@@ -3,6 +3,8 @@
   let currentUnit = 'metric';
   let measureMode = 'vertical'; // 'vertical' | 'slope'
   let lastResult  = null;       // holds the most recent calculation for saving
+  const wallModes = {};                                   // per-roof: { gable:'roof', hip:'roof', ... }
+  function getWallMode() { return wallModes[currentRoof] || 'roof'; }
 
   // ── localStorage ───────────────────────────────────────────────────────────
   const STORAGE_KEY = 'roofVolumeCalcs';
@@ -22,73 +24,95 @@
       label: 'Gable Roof',
       fields: [
         {
-          id: 'length', label: 'Length', hint: 'Along the ridge',
+          id: 'length', label: 'Length (L)', hint: 'Along the ridge',
           tooltip: 'Measure along the length of the building, parallel to the ridge (the horizontal peak of the roof). This is the longer dimension on a typical house.'
         },
         {
-          id: 'width', label: 'Width', hint: 'Perpendicular to ridge',
+          id: 'width', label: 'Width (W)', hint: 'Perpendicular to ridge',
           tooltip: 'Measure across the full width of the building, at right angles to the ridge. This spans from one eave to the other.'
         },
         {
-          id: 'height', label: 'Ridge Height', hint: 'Eave to peak',
+          id: 'height', label: 'Height (H)', hint: 'Eave to ridge (vertical)',
           tooltip: 'Measure the vertical distance from the eave (bottom edge of the roof) straight up to the ridge (the very top). Use a plumb line or spirit level for accuracy.'
+        },
+        {
+          id: 'wallHeight', label: 'Wall Height (WH)', hint: 'Ground to eave',
+          tooltip: 'The external height of the walls from ground level up to the eave (where the roof begins). Used to calculate the wall/box volume beneath the roof.'
         },
       ],
       formula: (L, W, H) => 0.5 * L * W * H,
       slopeOffset: (W) => W / 2,
-      formulaText: () => measureMode === 'slope'
-        ? `H = √(S² − (W/2)²)  →  V = ½ × L × W × H`
-        : `V = ½ × Length × Width × Height`,
+      formulaText: () => {
+        if (getWallMode() === 'walls') {
+          return measureMode === 'slope'
+            ? `H = √(S² − (W/2)²)  →  V = L×W×WH + ½×L×W×H`
+            : `V = L×W×WH + ½×L×W×H`;
+        }
+        return measureMode === 'slope'
+          ? `H = √(S² − (W/2)²)  →  V = ½ × L × W × H`
+          : `V = ½ × Length × Width × Height`;
+      },
     },
     extension: {
       label: 'Roof Extension',
       fields: [
         {
-          id: 'width', label: 'Extension Width', hint: 'W — across the extension',
+          id: 'width', label: 'Width (W)', hint: 'Across the extension',
           tooltip: 'Measure across the full width of the extension, from one eave to the other, at right angles to the main house.'
         },
         {
-          id: 'length', label: 'Gable Length', hint: 'L₁ — rectangular section',
+          id: 'length', label: 'Gable Length (L)', hint: 'Rectangular section',
           tooltip: 'The length of the straight rectangular (prism) section of the extension roof — from the end wall of the extension to where the roof starts to taper toward the main house.'
         },
         {
-          id: 'length2', label: 'Pyramid Length', hint: 'L₂ — tapering section',
+          id: 'length2', label: 'Pyramid Length (PL)', hint: 'Tapering section',
           tooltip: 'The length of the tapering triangular pyramid section — from where the roof starts to taper to where it meets the main house ridge. This is measured along the eave.'
         },
         {
-          id: 'height', label: 'Ridge Height', hint: 'H — eave to ridge',
+          id: 'height', label: 'Height (H)', hint: 'Eave to ridge (vertical)',
           tooltip: 'The vertical height from the eave of the extension up to the ridge. This should match the height of the main house ridge if the roofs are joined at the same level.'
         },
       ],
       formulaText: () => measureMode === 'slope'
-        ? `H = √(S² − L₂² − (W/2)²)  ·  V = ½WL₁H + WHL₂/6`
-        : `V_gable = ½ × W × L₁ × H  ·  V_pyramid = W × H × L₂ / 6`,
+        ? `H = √(S² − PL² − (W/2)²)  ·  V = ½×W×L×H + W×H×PL/6`
+        : `V_gable = ½ × W × L × H  ·  V_pyramid = W × H × PL / 6`,
     },
     leanto: {
       label: 'Lean-to Roof',
       fields: [
         {
-          id: 'length', label: 'Length', hint: 'Along the eave',
+          id: 'length', label: 'Length (L)', hint: 'Along the eave',
           tooltip: 'Measure the length of the lean-to along its eave (the bottom horizontal edge of the roof).'
         },
         {
-          id: 'width', label: 'Width', hint: 'Across the roof',
+          id: 'width', label: 'Width (W)', hint: 'Across the roof',
           tooltip: 'Measure the horizontal distance across the lean-to, from the low eave to the wall where the high edge meets. This is the full span of the slope.'
         },
         {
-          id: 'height', label: 'Height', hint: 'Low eave to high eave',
+          id: 'height', label: 'Height (H)', hint: 'Low eave to high eave (vertical)',
           tooltip: 'Measure the vertical height difference between the low eave (bottom edge) and the high eave (where the roof meets the wall at the top). Do not measure along the slope — measure vertically.'
+        },
+        {
+          id: 'wallHeight', label: 'Wall Height (WH)', hint: 'Ground to low eave',
+          tooltip: 'The external height of the lower wall, from ground level up to the low eave (where the roof begins). Used to calculate the wall/box volume beneath the roof.'
         },
       ],
       formula: (L, W, H) => 0.5 * L * W * H,
       slopeOffset: (W) => W,
-      formulaText: () => measureMode === 'slope'
-        ? `H = √(S² − W²)  →  V = ½ × L × W × H`
-        : `V = ½ × Length × Width × Height`,
+      formulaText: () => {
+        if (getWallMode() === 'walls') {
+          return measureMode === 'slope'
+            ? `H = √(S² − W²)  →  V = L×W×WH + ½×L×W×H`
+            : `V = L×W×WH + ½×L×W×H`;
+        }
+        return measureMode === 'slope'
+          ? `H = √(S² − W²)  →  V = ½ × L × W × H`
+          : `V = ½ × Length × Width × Height`;
+      },
     },
 
-    hipwalls: {
-      label: 'Hip + Walls',
+    hip: {
+      label: 'Hip Roof',
       fields: [
         {
           id: 'length', label: 'Length (L)', hint: 'External building length',
@@ -99,22 +123,29 @@
           tooltip: 'The total external width of the building, measured at eave level, perpendicular to the ridge.'
         },
         {
-          id: 'wallHeight', label: 'Wall Height (h)', hint: 'Ground to eave',
+          id: 'wallHeight', label: 'Wall Height (WH)', hint: 'Ground to eave',
           tooltip: 'The external height of the walls from ground level up to the eave (where the roof begins). Used to calculate the wall/box volume beneath the roof.'
         },
         {
-          id: 'height', label: 'Roof Height (A)', hint: 'Eave to ridge (vertical)',
-          tooltip: 'The vertical height from the eave up to the ridge. This is the "A" measurement on the Planning Portal calculator.'
+          id: 'height', label: 'Height (H)', hint: 'Eave to ridge (vertical)',
+          tooltip: 'The vertical height from the eave up to the ridge. This is the roof height measurement used in the volume formula.'
         },
         {
-          id: 'ridgeLength', label: 'Ridge Length (C)', hint: 'Length of flat ridge',
-          tooltip: 'The length of the flat ridge at the top of the roof. On the Planning Portal this is "C". The hip end run B = L − C (so B + C must equal L).'
+          id: 'ridgeLength', label: 'Ridge Length (R)', hint: 'Length of flat ridge',
+          tooltip: 'The length of the flat ridge at the top of the roof. The hip end run = L − R (so hip run + R must equal L).'
         },
       ],
       slopeOffset: (W) => W / 2,
-      formulaText: () => measureMode === 'slope'
-        ? `A = √(S² − (W/2)²)  →  V = W×L×h + W×A×(2L+C)/6`
-        : `V = W×L×h + W×A×(2L+C)/6`,
+      formulaText: () => {
+        if (getWallMode() === 'walls') {
+          return measureMode === 'slope'
+            ? `H = √(S² − (W/2)²)  →  V = W×L×WH + W×H×(2L+R)/6`
+            : `V = W×L×WH + W×H×(2L+R)/6`;
+        }
+        return measureMode === 'slope'
+          ? `H = √(S² − (W/2)²)  →  V = W×H×(2L+R)/6`
+          : `V = W×H×(2L+R)/6`;
+      },
     },
   };
 
@@ -126,93 +157,114 @@
     gable: (mode, vals = {}) => {
       const u = getUnitLabel();
       const lbl = (v, name) => v ? `${name} = ${formatNum(v)} ${u}` : name;
-      const wLabel = lbl(vals.width,  'Width (W)');
-      const lLabel = lbl(vals.length, 'Length (L)');
-      const hLabel = mode === 'slope'
-        ? lbl(vals.slope,  'Slope (S)')
-        : lbl(vals.height, 'Height (H)');
+      const wLabel    = lbl(vals.width,      'Width (W)');
+      const lLabel    = lbl(vals.length,     'Length (L)');
+      const hLabel    = mode === 'slope' ? lbl(vals.slope, 'Slope (S)') : lbl(vals.height, 'Height (H)');
+      const wallLabel = lbl(vals.wallHeight, 'WH');
+      const dc = '#64748b';
+
+      const mS = mode === 'slope' ? 'gs-s' : 'g-s';
+      const mE = mode === 'slope' ? 'gs-e' : 'g-e';
+
+      const wallLayer = `
+    <g class="wall-layer">
+      <polygon points="55,155 175,155 175,205 55,205"
+               fill="#e0f2fe" stroke="#2563eb" stroke-width="1.5"/>
+      <polygon points="175,155 275,120 275,170 175,205"
+               fill="#bae6fd" stroke="#2563eb" stroke-width="1.5"/>
+      <line x1="155" y1="120" x2="155" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
+      <line x1="55"  y1="205" x2="155" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
+      <line x1="155" y1="170" x2="275" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
+      <line x1="193" y1="157" x2="193" y2="203" stroke="${dc}" stroke-width="1.2"
+            marker-start="url(#${mS})" marker-end="url(#${mE})"/>
+      <line x1="175" y1="155" x2="196" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+      <line x1="175" y1="205" x2="196" y2="205" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+      <text x="202" y="183" text-anchor="start" fill="#475569" font-size="11" font-weight="600">${wallLabel}</text>
+    </g>`;
 
       return mode === 'slope' ? `
-      <svg width="320" height="195" viewBox="-15 10 350 195" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <marker id="gs-e" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="#64748b"/>
-          </marker>
-          <marker id="gs-s" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="#64748b"/>
-          </marker>
-        </defs>
-        <!-- Hidden edges -->
-        <line x1="55" y1="155" x2="155" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <line x1="155" y1="120" x2="275" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <line x1="155" y1="120" x2="215" y2="25"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <!-- Back gable face -->
-        <polygon points="155,120 275,120 215,25" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5" opacity="0.55"/>
-        <!-- Left roof slope -->
-        <polygon points="55,155 115,60 215,25 155,120" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
-        <!-- Right roof slope -->
-        <polygon points="175,155 115,60 215,25 275,120" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
-        <!-- Front gable triangle -->
-        <polygon points="55,155 175,155 115,60" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
-        <!-- Dashed vertical height line and right-angle mark -->
-        <line x1="115" y1="62" x2="115" y2="153" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3"/>
-        <polyline points="115,147 107,147 107,155" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
-        <!-- Right bottom edge, back edge, ridge -->
-        <line x1="175" y1="155" x2="275" y2="120" stroke="#2563eb" stroke-width="1.5"/>
-        <line x1="275" y1="120" x2="215" y2="25"  stroke="#2563eb" stroke-width="1.5"/>
-        <line x1="115" y1="60"  x2="215" y2="25"  stroke="#1d4ed8" stroke-width="2"/>
-        <!-- Slope (S) label along A→C -->
-        <text transform="translate(73,100) rotate(-58)" text-anchor="middle"
-              fill="#2563eb" font-size="11" font-weight="700">${hLabel}</text>
-        <!-- Width dimension -->
-        <line x1="55" y1="172" x2="175" y2="172" stroke="#64748b" stroke-width="1.2"
-              marker-start="url(#gs-s)" marker-end="url(#gs-e)"/>
-        <text x="115" y="187" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${wLabel}</text>
-        <!-- Length dimension -->
-        <line x1="181" y1="172" x2="281" y2="137" stroke="#64748b" stroke-width="1.2"
-              marker-start="url(#gs-s)" marker-end="url(#gs-e)"/>
-        <text x="231" y="168" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${lLabel}</text>
-      </svg>` : `
-      <svg width="320" height="195" viewBox="-15 10 350 195" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <marker id="g-e" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="#64748b"/>
-          </marker>
-          <marker id="g-s" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="#64748b"/>
-          </marker>
-        </defs>
-        <!-- Hidden edges -->
-        <line x1="55" y1="155" x2="155" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <line x1="155" y1="120" x2="275" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <line x1="155" y1="120" x2="215" y2="25"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <!-- Back gable face -->
-        <polygon points="155,120 275,120 215,25" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5" opacity="0.55"/>
-        <!-- Left roof slope -->
-        <polygon points="55,155 115,60 215,25 155,120" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
-        <!-- Right roof slope -->
-        <polygon points="175,155 115,60 215,25 275,120" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
-        <!-- Front gable triangle -->
-        <polygon points="55,155 175,155 115,60" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
-        <!-- Right bottom edge and back edge -->
-        <line x1="175" y1="155" x2="275" y2="120" stroke="#2563eb" stroke-width="1.5"/>
-        <line x1="275" y1="120" x2="215" y2="25"  stroke="#2563eb" stroke-width="1.5"/>
-        <!-- Ridge -->
-        <line x1="115" y1="60" x2="215" y2="25" stroke="#1d4ed8" stroke-width="2"/>
-        <!-- Width dimension -->
-        <line x1="55" y1="172" x2="175" y2="172" stroke="#64748b" stroke-width="1.2"
-              marker-start="url(#g-s)" marker-end="url(#g-e)"/>
-        <text x="115" y="187" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${wLabel}</text>
-        <!-- Height dimension -->
-        <line x1="36" y1="155" x2="36" y2="60" stroke="#64748b" stroke-width="1.2"
-              marker-start="url(#g-s)" marker-end="url(#g-e)"/>
-        <text x="22" y="112" text-anchor="middle" fill="#475569" font-size="11" font-weight="600"
-              transform="rotate(-90,22,112)">${hLabel}</text>
-        <!-- Length dimension -->
-        <line x1="181" y1="172" x2="281" y2="137" stroke="#64748b" stroke-width="1.2"
-              marker-start="url(#g-s)" marker-end="url(#g-e)"/>
-        <text x="231" y="168" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${lLabel}</text>
-      </svg>`;
+  <svg width="320" height="235" viewBox="-15 10 350 250" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="gs-e" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="#64748b"/>
+      </marker>
+      <marker id="gs-s" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
+        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="#64748b"/>
+      </marker>
+    </defs>
+    ${wallLayer}
+    <!-- Hidden edges -->
+    <line x1="55" y1="155" x2="155" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <line x1="155" y1="120" x2="275" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <line x1="155" y1="120" x2="215" y2="25"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <!-- Back gable face -->
+    <polygon points="155,120 275,120 215,25" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5" opacity="0.55"/>
+    <!-- Left roof slope -->
+    <polygon points="55,155 115,60 215,25 155,120" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
+    <!-- Right roof slope -->
+    <polygon points="175,155 115,60 215,25 275,120" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+    <!-- Front gable triangle -->
+    <polygon points="55,155 175,155 115,60" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+    <!-- Dashed vertical height line and right-angle mark -->
+    <line x1="115" y1="62" x2="115" y2="153" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3"/>
+    <polyline points="115,147 107,147 107,155" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+    <!-- Right bottom edge, back edge, ridge -->
+    <line x1="175" y1="155" x2="275" y2="120" stroke="#2563eb" stroke-width="1.5"/>
+    <line x1="275" y1="120" x2="215" y2="25"  stroke="#2563eb" stroke-width="1.5"/>
+    <line x1="115" y1="60"  x2="215" y2="25"  stroke="#1d4ed8" stroke-width="2"/>
+    <!-- Slope label -->
+    <text transform="translate(73,100) rotate(-58)" text-anchor="middle"
+          fill="#2563eb" font-size="11" font-weight="700">${hLabel}</text>
+    <!-- Width dimension -->
+    <line x1="55" y1="172" x2="175" y2="172" stroke="#64748b" stroke-width="1.2"
+          marker-start="url(#gs-s)" marker-end="url(#gs-e)"/>
+    <text x="115" y="187" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${wLabel}</text>
+    <!-- Length dimension -->
+    <line x1="181" y1="172" x2="281" y2="137" stroke="#64748b" stroke-width="1.2"
+          marker-start="url(#gs-s)" marker-end="url(#gs-e)"/>
+    <text x="231" y="168" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${lLabel}</text>
+  </svg>` : `
+  <svg width="320" height="235" viewBox="-15 10 350 250" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="g-e" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="#64748b"/>
+      </marker>
+      <marker id="g-s" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
+        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="#64748b"/>
+      </marker>
+    </defs>
+    ${wallLayer}
+    <!-- Hidden edges -->
+    <line x1="55" y1="155" x2="155" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <line x1="155" y1="120" x2="275" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <line x1="155" y1="120" x2="215" y2="25"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <!-- Back gable face -->
+    <polygon points="155,120 275,120 215,25" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5" opacity="0.55"/>
+    <!-- Left roof slope -->
+    <polygon points="55,155 115,60 215,25 155,120" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
+    <!-- Right roof slope -->
+    <polygon points="175,155 115,60 215,25 275,120" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+    <!-- Front gable triangle -->
+    <polygon points="55,155 175,155 115,60" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+    <!-- Right bottom edge and back edge -->
+    <line x1="175" y1="155" x2="275" y2="120" stroke="#2563eb" stroke-width="1.5"/>
+    <line x1="275" y1="120" x2="215" y2="25"  stroke="#2563eb" stroke-width="1.5"/>
+    <!-- Ridge -->
+    <line x1="115" y1="60" x2="215" y2="25" stroke="#1d4ed8" stroke-width="2"/>
+    <!-- Width dimension -->
+    <line x1="55" y1="172" x2="175" y2="172" stroke="#64748b" stroke-width="1.2"
+          marker-start="url(#g-s)" marker-end="url(#g-e)"/>
+    <text x="115" y="187" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${wLabel}</text>
+    <!-- Height dimension -->
+    <line x1="36" y1="155" x2="36" y2="60" stroke="#64748b" stroke-width="1.2"
+          marker-start="url(#g-s)" marker-end="url(#g-e)"/>
+    <text x="22" y="112" text-anchor="middle" fill="#475569" font-size="11" font-weight="600"
+          transform="rotate(-90,22,112)">${hLabel}</text>
+    <!-- Length dimension -->
+    <line x1="181" y1="172" x2="281" y2="137" stroke="#64748b" stroke-width="1.2"
+          marker-start="url(#g-s)" marker-end="url(#g-e)"/>
+    <text x="231" y="168" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${lLabel}</text>
+  </svg>`;
     },
 
     /*
@@ -230,8 +282,8 @@
       const sColour   = '#2563eb';
 
       const wLabel  = lbl(vals.width,   'W');
-      const l1Label = lbl(vals.length,  'L₁');
-      const l2Label = lbl(vals.length2, 'L₂');
+      const l1Label = lbl(vals.length,  'L');
+      const l2Label = lbl(vals.length2, 'PL');
       const hLabel  = mode === 'slope'
         ? lbl(vals.slope,  'S')
         : lbl(vals.height, 'H');
@@ -325,103 +377,104 @@
     leanto: (mode, vals = {}) => {
       const u = getUnitLabel();
       const lbl = (v, name) => v ? `${name} = ${formatNum(v)} ${u}` : name;
-      const wLabel = lbl(vals.width,  'Width (W)');
-      const lLabel = lbl(vals.length, 'Length (L)');
-      const hLabel = mode === 'slope' ? lbl(vals.slope, 'Slope (S)') : lbl(vals.height, 'Height (H)');
+      const wLabel    = lbl(vals.width,      'Width (W)');
+      const lLabel    = lbl(vals.length,     'Length (L)');
+      const hLabel    = mode === 'slope' ? lbl(vals.slope, 'Slope (S)') : lbl(vals.height, 'Height (H)');
+      const wallLabel = lbl(vals.wallHeight, 'WH');
       const dc = '#64748b', sc = '#2563eb';
 
-      // Vertices: front right-triangle A(55,155) B(175,155) C(175,55)
-      //           back right-triangle  D(155,120) E(275,120) F(275,20)
       const heightAnnotation = mode === 'slope' ? `
-        <!-- Slope: A(55,155) to C(175,55) along front face -->
-        <line x1="57" y1="153" x2="173" y2="57"
-              stroke="${sc}" stroke-width="1.8" stroke-dasharray="6,3"
-              marker-start="url(#lt-ss)" marker-end="url(#lt-se)"/>
-        <text transform="translate(102,96) rotate(-40)" text-anchor="middle"
-              fill="${sc}" font-size="11" font-weight="700">${hLabel}</text>
-      ` : `
-        <!-- Height: right of C(175,55)→B(175,155), external right -->
-        <line x1="193" y1="155" x2="193" y2="55" stroke="${dc}" stroke-width="1.2"
-              marker-start="url(#lt-s)" marker-end="url(#lt-e)"/>
-        <line x1="175" y1="155" x2="196" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-        <line x1="175" y1="55"  x2="196" y2="55"  stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-        <text x="207" y="105" text-anchor="middle" fill="#475569" font-size="11" font-weight="600"
-              transform="rotate(-90,207,105)">${hLabel}</text>
-      `;
+    <!-- Slope: A(55,155) to C(175,55) along front face -->
+    <line x1="57" y1="153" x2="173" y2="57"
+          stroke="${sc}" stroke-width="1.8" stroke-dasharray="6,3"
+          marker-start="url(#lt-ss)" marker-end="url(#lt-se)"/>
+    <text transform="translate(102,96) rotate(-40)" text-anchor="middle"
+          fill="${sc}" font-size="11" font-weight="700">${hLabel}</text>
+  ` : `
+    <!-- Height: right of C(175,55)→B(175,155), external right -->
+    <line x1="193" y1="155" x2="193" y2="55" stroke="${dc}" stroke-width="1.2"
+          marker-start="url(#lt-s)" marker-end="url(#lt-e)"/>
+    <line x1="175" y1="155" x2="196" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+    <line x1="175" y1="55"  x2="196" y2="55"  stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+    <text x="207" y="105" text-anchor="middle" fill="#475569" font-size="11" font-weight="600"
+          transform="rotate(-90,207,105)">${hLabel}</text>
+  `;
 
       return `
-      <svg width="320" height="195" viewBox="-5 5 340 200" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <marker id="lt-e" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
-          </marker>
-          <marker id="lt-s" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
-          </marker>
-          <marker id="lt-se" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
-          </marker>
-          <marker id="lt-ss" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
-          </marker>
-        </defs>
+  <svg width="320" height="235" viewBox="-5 5 340 250" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="lt-e" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
+      </marker>
+      <marker id="lt-s" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
+        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
+      </marker>
+      <marker id="lt-se" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
+      </marker>
+      <marker id="lt-ss" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
+        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
+      </marker>
+    </defs>
 
-        <!-- Hidden: A-D (bottom-left), D-E (back bottom) -->
-        <line x1="55"  y1="155" x2="155" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <line x1="155" y1="120" x2="275" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <!-- WALL LAYER (fades out in roof-only mode) -->
+    <g class="wall-layer">
+      <polygon points="55,155 175,155 175,205 55,205"
+               fill="#e0f2fe" stroke="#2563eb" stroke-width="1.5"/>
+      <polygon points="175,155 275,120 275,170 175,205"
+               fill="#bae6fd" stroke="#2563eb" stroke-width="1.5"/>
+      <line x1="155" y1="120" x2="155" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
+      <line x1="55"  y1="205" x2="155" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
+      <line x1="155" y1="170" x2="275" y2="170" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
+      <line x1="193" y1="157" x2="193" y2="203" stroke="${dc}" stroke-width="1.2"
+            marker-start="url(#lt-s)" marker-end="url(#lt-e)"/>
+      <line x1="175" y1="155" x2="196" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+      <line x1="175" y1="205" x2="196" y2="205" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+      <text x="202" y="183" text-anchor="start" fill="#475569" font-size="11" font-weight="600">${wallLabel}</text>
+    </g>
 
-        <!-- Back triangle D-E-F (faint) -->
-        <polygon points="155,120 275,120 275,20" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5" opacity="0.5"/>
+    <!-- ROOF (always visible) -->
+    <line x1="55"  y1="155" x2="155" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <line x1="155" y1="120" x2="275" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <polygon points="155,120 275,120 275,20" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5" opacity="0.5"/>
+    <polygon points="55,155 175,55 275,20 155,120" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
+    <polygon points="175,155 175,55 275,20 275,120" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+    <polygon points="55,155 175,155 175,55" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
 
-        <!-- Slope/top face A-C-F-D -->
-        <polygon points="55,155 175,55 275,20 155,120" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
+    <!-- Width: below A-B -->
+    <line x1="55" y1="172" x2="175" y2="172" stroke="${dc}" stroke-width="1.2"
+          marker-start="url(#lt-s)" marker-end="url(#lt-e)"/>
+    <text x="115" y="187" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${wLabel}</text>
 
-        <!-- High-end wall B-C-F-E (rectangle) -->
-        <polygon points="175,155 175,55 275,20 275,120" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+    <!-- Length: along B-E offset -->
+    <line x1="183" y1="163" x2="283" y2="128" stroke="${dc}" stroke-width="1.2"
+          marker-start="url(#lt-s)" marker-end="url(#lt-e)"/>
+    <text x="248" y="158" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${lLabel}</text>
 
-        <!-- Front right triangle A-B-C -->
-        <polygon points="55,155 175,155 175,55" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
-
-        <!-- Width: below A-B -->
-        <line x1="55" y1="173" x2="175" y2="173" stroke="${dc}" stroke-width="1.2"
-              marker-start="url(#lt-s)" marker-end="url(#lt-e)"/>
-        <text x="115" y="187" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${wLabel}</text>
-
-        <!-- Length: along B-E offset -->
-        <line x1="183" y1="163" x2="283" y2="128" stroke="${dc}" stroke-width="1.2"
-              marker-start="url(#lt-s)" marker-end="url(#lt-e)"/>
-        <text x="248" y="158" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${lLabel}</text>
-
-        ${heightAnnotation}
-      </svg>`;
+    ${heightAnnotation}
+  </svg>`;
     },
 
-    hipwalls: (mode, vals = {}) => {
+    hip: (mode, vals = {}) => {
       const u = getUnitLabel();
       const lbl = (v, name) => v ? `${name} = ${formatNum(v)} ${u}` : name;
       const lLabel    = lbl(vals.length,      'L');
       const wLabel    = lbl(vals.width,       'W');
-      const aLabel    = mode === 'slope' ? lbl(vals.slope, 'Slope') : lbl(vals.height, 'A');
-      const wallLabel = lbl(vals.wallHeight,  'h');
-      const cLabel    = lbl(vals.ridgeLength, 'C');
+      const aLabel    = mode === 'slope' ? lbl(vals.slope, 'Slope (S)') : lbl(vals.height, 'H');
+      const wallLabel = lbl(vals.wallHeight,  'WH');
+      const cLabel    = lbl(vals.ridgeLength, 'R');
       const dc = '#64748b', sc = '#2563eb';
-
-      // Roof vertices (same as hip diagram):
-      //   Base:  A(25,155) B(235,155) C(285,118) D(75,118)
-      //   Ridge: E(100,45) F(210,45)
-      // Wall bottom (50px below eave):
-      //   A'(25,205) B'(235,205) C'(285,168) D'(75,168)
 
       const roofAnnotation = mode === 'slope' ? `
         <line x1="130" y1="153" x2="155" y2="47"
               stroke="${sc}" stroke-width="2" stroke-dasharray="6,3"
-              marker-start="url(#hw-ss)" marker-end="url(#hw-se)"/>
+              marker-start="url(#hp-ss)" marker-end="url(#hp-se)"/>
         <polyline points="130,149 138,151 136,157" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
         <text x="96" y="91" text-anchor="middle" fill="${sc}" font-size="11" font-weight="700"
               transform="rotate(-77,96,91)">${aLabel}</text>
       ` : `
         <line x1="3" y1="45" x2="3" y2="155" stroke="${dc}" stroke-width="1.2"
-              marker-start="url(#hw-s)" marker-end="url(#hw-e)"/>
+              marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
         <line x1="25"  y1="155" x2="0"  y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
         <line x1="100" y1="45"  x2="0"  y2="45"  stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
         <text x="-9" y="100" text-anchor="middle" fill="#475569" font-size="11" font-weight="600"
@@ -429,89 +482,78 @@
       `;
 
       return `
-      <svg width="320" height="240" viewBox="-30 5 340 255" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <marker id="hw-e" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
-          </marker>
-          <marker id="hw-s" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
-          </marker>
-          <marker id="hw-se" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
-          </marker>
-          <marker id="hw-ss" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
-            <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
-          </marker>
-        </defs>
+  <svg width="320" height="220" viewBox="-30 5 340 235" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="hp-e" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
+      </marker>
+      <marker id="hp-s" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
+        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${dc}"/>
+      </marker>
+      <marker id="hp-se" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
+      </marker>
+      <marker id="hp-ss" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse">
+        <path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${sc}"/>
+      </marker>
+    </defs>
 
-        <!-- WALLS (drawn first so roof overlaps) -->
-        <!-- Front wall face -->
-        <polygon points="25,155 235,155 235,205 25,205"
-                 fill="#e0f2fe" stroke="#2563eb" stroke-width="1.5"/>
-        <!-- Right wall face -->
-        <polygon points="235,155 285,118 285,168 235,205"
-                 fill="#bae6fd" stroke="#2563eb" stroke-width="1.5"/>
-        <!-- Hidden left + back wall edges -->
-        <line x1="75" y1="118" x2="75" y2="168"  stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-        <line x1="25" y1="205" x2="75" y2="168"  stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
-        <line x1="75" y1="168" x2="285" y2="168" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
+    <!-- WALL LAYER (fades out in roof-only mode) -->
+    <g class="wall-layer">
+      <polygon points="25,155 235,155 235,205 25,205"
+               fill="#e0f2fe" stroke="#2563eb" stroke-width="1.5"/>
+      <polygon points="235,155 285,118 285,168 235,205"
+               fill="#bae6fd" stroke="#2563eb" stroke-width="1.5"/>
+      <line x1="75" y1="118" x2="75" y2="168"  stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
+      <line x1="25" y1="205" x2="75" y2="168"  stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
+      <line x1="75" y1="168" x2="285" y2="168" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4"/>
+      <!-- h annotation -->
+      <line x1="248" y1="157" x2="248" y2="203" stroke="${dc}" stroke-width="1.2"
+            marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
+      <line x1="235" y1="155" x2="251" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+      <line x1="235" y1="205" x2="251" y2="205" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+      <text x="256" y="183" text-anchor="start" fill="#475569" font-size="11" font-weight="600">${wallLabel}</text>
+    </g>
 
-        <!-- ROOF -->
-        <!-- Hidden base & back hip edges -->
-        <line x1="25"  y1="155" x2="75"  y2="118" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <line x1="75"  y1="118" x2="285" y2="118" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <line x1="75"  y1="118" x2="100" y2="45"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <line x1="285" y1="118" x2="210" y2="45"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <!-- Back slope -->
-        <polygon points="75,118 285,118 210,45 100,45"
-                 fill="#93c5fd" stroke="#2563eb" stroke-width="1" opacity="0.35"/>
-        <!-- Left hip triangle -->
-        <polygon points="25,155 75,118 100,45"
-                 fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
-        <!-- Right hip triangle -->
-        <polygon points="235,155 285,118 210,45"
-                 fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
-        <!-- Front slope trapezoid -->
-        <polygon points="25,155 235,155 210,45 100,45"
-                 fill="#bfdbfe" stroke="#2563eb" stroke-width="2"/>
-        <!-- Ridge E-F -->
-        <line x1="100" y1="45" x2="210" y2="45" stroke="#1d4ed8" stroke-width="2.5"/>
-        <circle cx="100" cy="45" r="2.5" fill="#1d4ed8"/>
-        <circle cx="210" cy="45" r="2.5" fill="#1d4ed8"/>
-        <!-- Front hip rafters -->
-        <line x1="25"  y1="155" x2="100" y2="45" stroke="#2563eb" stroke-width="1.5"/>
-        <line x1="235" y1="155" x2="210" y2="45" stroke="#2563eb" stroke-width="1.5"/>
-        <!-- Right base edge B-C -->
-        <line x1="235" y1="155" x2="285" y2="118" stroke="#2563eb" stroke-width="1.5"/>
+    <!-- ROOF (always visible) -->
+    <line x1="25"  y1="155" x2="75"  y2="118" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <line x1="75"  y1="118" x2="285" y2="118" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <line x1="75"  y1="118" x2="100" y2="45"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <line x1="285" y1="118" x2="210" y2="45"  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <polygon points="75,118 285,118 210,45 100,45"
+             fill="#93c5fd" stroke="#2563eb" stroke-width="1" opacity="0.35"/>
+    <polygon points="25,155 75,118 100,45"
+             fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+    <polygon points="235,155 285,118 210,45"
+             fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+    <polygon points="25,155 235,155 210,45 100,45"
+             fill="#bfdbfe" stroke="#2563eb" stroke-width="2"/>
+    <line x1="100" y1="45" x2="210" y2="45" stroke="#1d4ed8" stroke-width="2.5"/>
+    <circle cx="100" cy="45" r="2.5" fill="#1d4ed8"/>
+    <circle cx="210" cy="45" r="2.5" fill="#1d4ed8"/>
+    <line x1="25"  y1="155" x2="100" y2="45" stroke="#2563eb" stroke-width="1.5"/>
+    <line x1="235" y1="155" x2="210" y2="45" stroke="#2563eb" stroke-width="1.5"/>
+    <line x1="235" y1="155" x2="285" y2="118" stroke="#2563eb" stroke-width="1.5"/>
 
-        <!-- DIMENSION LABELS -->
-        <!-- C: ridge length (blue arrow above ridge) -->
-        <line x1="100" y1="30" x2="210" y2="30" stroke="${sc}" stroke-width="1.2"
-              marker-start="url(#hw-ss)" marker-end="url(#hw-se)"/>
-        <line x1="100" y1="45" x2="100" y2="32" stroke="${sc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-        <line x1="210" y1="45" x2="210" y2="32" stroke="${sc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-        <text x="155" y="24" text-anchor="middle" fill="${sc}" font-size="11" font-weight="700">${cLabel}</text>
+    <!-- C: ridge length -->
+    <line x1="100" y1="30" x2="210" y2="30" stroke="${sc}" stroke-width="1.2"
+          marker-start="url(#hp-ss)" marker-end="url(#hp-se)"/>
+    <line x1="100" y1="45" x2="100" y2="32" stroke="${sc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+    <line x1="210" y1="45" x2="210" y2="32" stroke="${sc}" stroke-width="0.8" stroke-dasharray="3,3"/>
+    <text x="155" y="24" text-anchor="middle" fill="${sc}" font-size="11" font-weight="700">${cLabel}</text>
 
-        <!-- L: below front wall bottom A'B' -->
-        <line x1="25" y1="223" x2="235" y2="223" stroke="${dc}" stroke-width="1.2"
-              marker-start="url(#hw-s)" marker-end="url(#hw-e)"/>
-        <text x="130" y="237" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${lLabel}</text>
+    <!-- L: below front eave -->
+    <line x1="25" y1="173" x2="235" y2="173" stroke="${dc}" stroke-width="1.2"
+          marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
+    <text x="130" y="187" text-anchor="middle" fill="#475569" font-size="11" font-weight="600">${lLabel}</text>
 
-        <!-- W: right wall bottom edge B'→C' -->
-        <line x1="243" y1="213" x2="293" y2="176" stroke="${dc}" stroke-width="1.2"
-              marker-start="url(#hw-s)" marker-end="url(#hw-e)"/>
-        <text x="299" y="198" text-anchor="start" fill="#475569" font-size="11" font-weight="600">${wLabel}</text>
+    <!-- W: right eave edge B-C -->
+    <line x1="243" y1="163" x2="293" y2="126" stroke="${dc}" stroke-width="1.2"
+          marker-start="url(#hp-s)" marker-end="url(#hp-e)"/>
+    <text x="295" y="155" text-anchor="start" fill="#475569" font-size="11" font-weight="600">${wLabel}</text>
 
-        <!-- h: wall height — small arrow right of front wall -->
-        <line x1="248" y1="157" x2="248" y2="203" stroke="${dc}" stroke-width="1.2"
-              marker-start="url(#hw-s)" marker-end="url(#hw-e)"/>
-        <line x1="235" y1="155" x2="251" y2="155" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-        <line x1="235" y1="205" x2="251" y2="205" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3,3"/>
-        <text x="256" y="183" text-anchor="start" fill="#475569" font-size="11" font-weight="600">${wallLabel}</text>
-
-        ${roofAnnotation}
-      </svg>`;
+    ${roofAnnotation}
+  </svg>`;
     },
 
   };
@@ -521,15 +563,25 @@
   function getVolumeLabel() { return currentUnit === 'metric' ? 'm³' : 'ft³'; }
 
   function renderControls() {
+    const wm = getWallMode();
+    const hipToggle = ['gable', 'leanto', 'hip'].includes(currentRoof) ? `
+      <div class="btn-group hip-mode-toggle" role="group">
+        <button type="button" class="btn btn-sm ${wm === 'roof'  ? 'btn-warning' : 'btn-outline-warning'}" onclick="setWallMode('roof')">Roof only</button>
+        <button type="button" class="btn btn-sm ${wm === 'walls' ? 'btn-warning' : 'btn-outline-warning'}" onclick="setWallMode('walls')">Roof + Walls</button>
+      </div>` : '';
+
     document.getElementById('controls-row').innerHTML = `
       <div class="controls-row">
-        <div class="btn-group" role="group">
-          <button type="button" class="btn btn-sm ${currentUnit === 'metric'   ? 'btn-primary' : 'btn-outline-primary'}" onclick="setUnit('metric')">Metric (m)</button>
-          <button type="button" class="btn btn-sm ${currentUnit === 'imperial' ? 'btn-primary' : 'btn-outline-primary'}" onclick="setUnit('imperial')">Imperial (ft)</button>
-        </div>
-        <div class="btn-group" role="group">
-          <button type="button" class="btn btn-sm ${measureMode === 'vertical' ? 'btn-primary' : 'btn-outline-primary'}" onclick="setMeasureMode('vertical')">Vertical height</button>
-          <button type="button" class="btn btn-sm ${measureMode === 'slope'    ? 'btn-primary' : 'btn-outline-primary'}" onclick="setMeasureMode('slope')">${currentRoof === 'extension' ? 'Hip rafter (S)' : 'Slope length'}</button>
+        ${hipToggle}
+        <div class="controls-right">
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-sm ${currentUnit === 'metric'   ? 'btn-primary' : 'btn-outline-primary'}" onclick="setUnit('metric')">Metric (m)</button>
+            <button type="button" class="btn btn-sm ${currentUnit === 'imperial' ? 'btn-primary' : 'btn-outline-primary'}" onclick="setUnit('imperial')">Imperial (ft)</button>
+          </div>
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-sm ${measureMode === 'vertical' ? 'btn-primary' : 'btn-outline-primary'}" onclick="setMeasureMode('vertical')">Vertical height</button>
+            <button type="button" class="btn btn-sm ${measureMode === 'slope'    ? 'btn-primary' : 'btn-outline-primary'}" onclick="setMeasureMode('slope')">${currentRoof === 'extension' ? 'Hip rafter (S)' : 'Slope length'}</button>
+          </div>
         </div>
       </div>`;
   }
@@ -539,14 +591,63 @@
     const u = getUnitLabel();
     const container = document.getElementById('inputs-container');
 
+    // Special layout for roofs with wall height: main fields in grid + animated wall height row
+    if (config.fields.some(f => f.id === 'wallHeight')) {
+      const mainFields = config.fields.filter(f => f.id !== 'wallHeight');
+      const wallField  = config.fields.find(f => f.id === 'wallHeight');
+
+      const makeField = (f, colCls) => {
+        const actualField = (f.id === 'height' && measureMode === 'slope')
+          ? { id: 'slope', label: currentRoof === 'extension' ? 'Hip Rafter (S)' : 'Slope (S)',
+              hint: currentRoof === 'extension' ? 'Outer corner to ridge apex' : 'Eave to ridge (along slope)',
+              tooltip: 'Measure along the slope of the roof from the eave (bottom edge) up to the ridge (peak). This is the diagonal surface measurement, not the vertical height.' }
+          : f;
+        return `
+          <div class="${colCls}">
+            <label class="form-label" for="field-${actualField.id}">
+              <span class="field-label-text">${actualField.label}</span>
+              ${actualField.tooltip ? `
+                <button type="button" class="field-tooltip-btn"
+                  data-bs-toggle="tooltip" data-bs-placement="top"
+                  data-bs-custom-class="measure-tooltip"
+                  title="${actualField.tooltip.replace(/"/g, '&quot;')}">?</button>` : ''}
+            </label>
+            ${actualField.hint ? `<div class="field-hint">${actualField.hint}</div>` : ''}
+            <div class="input-group">
+              <input type="number" class="form-control" id="field-${actualField.id}"
+                min="0" step="0.01" placeholder="0.00"
+                oninput="onFieldInput('${actualField.id}')" />
+              <span class="input-group-text">${u}</span>
+            </div>
+            <div class="field-error d-none" id="err-${actualField.id}"></div>
+          </div>`;
+      };
+
+      const mainColCls = mainFields.length >= 4 ? 'col-md-3' : 'col-md-4';
+      const mainHtml = mainFields.map(f => makeField(f, mainColCls)).join('');
+      const wallHtml = wallField ? `
+        <div class="wall-input-row${getWallMode() === 'roof' ? ' wall-input-hidden' : ''}" id="wall-input-row">
+          <div class="row g-3 pt-0">
+            ${makeField(wallField, 'col-md-3')}
+          </div>
+        </div>` : '';
+
+      container.innerHTML = `<div class="row g-3">${mainHtml}</div>${wallHtml}`;
+
+      container.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+        new bootstrap.Tooltip(el, { trigger: 'click' });
+      });
+      return;
+    }
+
     const colClass = config.fields.length >= 5 ? 'col-sm-6 col-md-4'
                    : config.fields.length >= 4 ? 'col-md-3'
                    : 'col-md-4';
 
     const fields = config.fields.map(f => {
       if (f.id === 'height' && measureMode === 'slope') {
-        const hint = currentRoof === 'extension' ? 'S — outer corner to ridge apex' : 'Eave to ridge';
-        const label = currentRoof === 'extension' ? 'Hip Rafter' : 'Slope Length';
+        const hint = currentRoof === 'extension' ? 'Outer corner to ridge apex' : 'Eave to ridge (along slope)';
+        const label = currentRoof === 'extension' ? 'Hip Rafter (S)' : 'Slope (S)';
         const tooltip = currentRoof === 'extension'
           ? 'Measure the hip rafter: the diagonal distance from the outer bottom corner of the extension (where the two eaves meet) up to the ridge apex. This is a 3D diagonal measurement.'
           : 'Measure along the slope of the roof from the eave (bottom edge) up to the ridge (peak). This is the diagonal surface measurement, not the vertical height.';
@@ -617,8 +718,11 @@
       wallHeight:  parseFloat(document.getElementById('field-wallHeight')?.value)  || null,
       ridgeLength: parseFloat(document.getElementById('field-ridgeLength')?.value) || null,
     };
-    document.getElementById('diagram').innerHTML =
-      typeof d === 'function' ? d(measureMode, vals) : d;
+    const diagramEl = document.getElementById('diagram');
+    diagramEl.innerHTML = typeof d === 'function' ? d(measureMode, vals) : d;
+    // Apply roof-only class for wall-mode CSS transitions (instant, no animation)
+    const hasWallToggle = ['gable', 'leanto', 'hip'].includes(currentRoof);
+    diagramEl.classList.toggle('roof-only', hasWallToggle && getWallMode() === 'roof');
   }
 
   // ── Actions ────────────────────────────────────────────────────────────────
@@ -650,6 +754,16 @@
     renderInputs();
   }
 
+  function setWallMode(mode) {
+    wallModes[currentRoof] = mode;
+    hideResult();
+    hideError();
+    document.getElementById('diagram').classList.toggle('roof-only', mode === 'roof');
+    const wallRow = document.getElementById('wall-input-row');
+    if (wallRow) wallRow.classList.toggle('wall-input-hidden', mode === 'roof');
+    renderControls();
+  }
+
   function calculate() {
     hideError();
     document.getElementById('result-breakdown').classList.add('d-none');
@@ -678,7 +792,7 @@
         }
         const minS = Math.sqrt(L2 * L2 + (W / 2) * (W / 2));
         if (S <= minS) {
-          showError(`Hip rafter must be greater than √(L₂² + (W/2)²) = ${formatNum(minS)} ${u}.`);
+          showError(`Hip rafter must be greater than √(PL² + (W/2)²) = ${formatNum(minS)} ${u}.`);
           return;
         }
         H = Math.sqrt(S * S - L2 * L2 - (W / 2) * (W / 2));
@@ -726,21 +840,20 @@
         displayUnit: vu,
         derivedHeight: measureMode === 'slope' ? H : null,
         breakdown: { gable: vGable, pyramid: vPyramid },
-        dims: { W, L1, L2, H },
+        dims: { W, L: L1, PL: L2, H },
         formula: config.formulaText(),
       };
       document.getElementById('save-label').value = '';
       return;
     }
 
-    // ── Hip + Walls calculator (5 inputs, wall + roof breakdown) ──────────────
-    if (currentRoof === 'hipwalls') {
+    // ── Hip Roof calculator (roof-only or roof + walls) ────────────────────────
+    if (currentRoof === 'hip') {
       const L  = parseFloat(document.getElementById('field-length')?.value);
       const W  = parseFloat(document.getElementById('field-width')?.value);
-      const hw = parseFloat(document.getElementById('field-wallHeight')?.value);
       const C  = parseFloat(document.getElementById('field-ridgeLength')?.value);
 
-      if ([L, W, hw, C].some(v => !isFinite(v) || v <= 0)) {
+      if ([L, W, C].some(v => !isFinite(v) || v <= 0)) {
         showError('Please enter valid positive values for all fields.');
         return;
       }
@@ -767,49 +880,70 @@
       }
 
       if (C >= L) {
-        showError('Ridge length (C) must be less than building length (L).');
+        showError('Ridge length (R) must be less than building length (L).');
         return;
       }
 
-      const wallVol  = L * W * hw;
-      const roofVol  = W * A * (2 * L + C) / 6;
-      const vTotal   = wallVol + roofVol;
-
       const M3_PER_FT3 = 0.0283168;
-      const altTotal = currentUnit === 'metric' ? vTotal / M3_PER_FT3 : vTotal * M3_PER_FT3;
-      const altUnit  = currentUnit === 'metric' ? 'ft³' : 'm³';
 
-      const derivedNote = measureMode === 'slope'
-        ? `Derived roof height: ${formatNum(A)} ${u}  ·  Also: ${formatNum(altTotal)} ${altUnit}`
-        : `Also: ${formatNum(altTotal)} ${altUnit}`;
-
-      document.getElementById('result-roof-label').textContent = 'Hip + Walls — Total Volume';
-      document.getElementById('result-value').textContent = formatNum(vTotal);
-      document.getElementById('result-unit').textContent = vu;
-      document.getElementById('result-alt').textContent = derivedNote;
-      document.getElementById('result-formula').textContent = config.formulaText();
-
-      const bd = document.getElementById('result-breakdown');
-      bd.innerHTML = `
-        <span>🏠 Walls: <strong>${formatNum(wallVol)} ${vu}</strong></span>
-        <span>🏚 Roof: <strong>${formatNum(roofVol)} ${vu}</strong></span>`;
-      bd.classList.remove('d-none');
-
-      document.getElementById('result').classList.remove('d-none');
-
-      lastResult = {
-        id: Date.now(),
-        roofType: 'hipwalls',
-        label: '',
-        unit: currentUnit,
-        volumeM3: currentUnit === 'metric' ? vTotal : vTotal * 0.0283168,
-        displayVolume: vTotal,
-        displayUnit: vu,
-        derivedHeight: measureMode === 'slope' ? A : null,
-        breakdown: { wall: wallVol, roof: roofVol },
-        dims: { L, W, h: hw, A, C },
-        formula: config.formulaText(),
-      };
+      if (getWallMode() === 'walls') {
+        const hw = parseFloat(document.getElementById('field-wallHeight')?.value);
+        if (!isFinite(hw) || hw <= 0) {
+          showError('Please enter a valid positive wall height.');
+          return;
+        }
+        const wallVol = L * W * hw;
+        const roofVol = W * A * (2 * L + C) / 6;
+        const vTotal  = wallVol + roofVol;
+        const altTotal = currentUnit === 'metric' ? vTotal / M3_PER_FT3 : vTotal * M3_PER_FT3;
+        const altUnit  = currentUnit === 'metric' ? 'ft³' : 'm³';
+        const derivedNote = measureMode === 'slope'
+          ? `Derived roof height: ${formatNum(A)} ${u}  ·  Also: ${formatNum(altTotal)} ${altUnit}`
+          : `Also: ${formatNum(altTotal)} ${altUnit}`;
+        document.getElementById('result-roof-label').textContent = 'Hip + Walls — Total Volume';
+        document.getElementById('result-value').textContent = formatNum(vTotal);
+        document.getElementById('result-unit').textContent = vu;
+        document.getElementById('result-alt').textContent = derivedNote;
+        document.getElementById('result-formula').textContent = config.formulaText();
+        const bd = document.getElementById('result-breakdown');
+        bd.innerHTML = `
+          <span>🏠 Walls: <strong>${formatNum(wallVol)} ${vu}</strong></span>
+          <span>🏚 Roof: <strong>${formatNum(roofVol)} ${vu}</strong></span>`;
+        bd.classList.remove('d-none');
+        document.getElementById('result').classList.remove('d-none');
+        lastResult = {
+          id: Date.now(), roofType: 'hip', label: '', unit: currentUnit,
+          volumeM3: currentUnit === 'metric' ? vTotal : vTotal * M3_PER_FT3,
+          displayVolume: vTotal, displayUnit: vu,
+          derivedHeight: measureMode === 'slope' ? A : null,
+          breakdown: { wall: wallVol, roof: roofVol },
+          dims: { L, W, WH: hw, H: A, R: C }, formula: config.formulaText(),
+          wallMode: 'walls',
+        };
+      } else {
+        const roofVol = W * A * (2 * L + C) / 6;
+        const altTotal = currentUnit === 'metric' ? roofVol / M3_PER_FT3 : roofVol * M3_PER_FT3;
+        const altUnit  = currentUnit === 'metric' ? 'ft³' : 'm³';
+        const derivedNote = measureMode === 'slope'
+          ? `Derived roof height: ${formatNum(A)} ${u}  ·  Also: ${formatNum(altTotal)} ${altUnit}`
+          : `Also: ${formatNum(altTotal)} ${altUnit}`;
+        document.getElementById('result-roof-label').textContent = 'Hip Roof — Roof Volume';
+        document.getElementById('result-value').textContent = formatNum(roofVol);
+        document.getElementById('result-unit').textContent = vu;
+        document.getElementById('result-alt').textContent = derivedNote;
+        document.getElementById('result-formula').textContent = config.formulaText();
+        document.getElementById('result-breakdown').classList.add('d-none');
+        document.getElementById('result').classList.remove('d-none');
+        lastResult = {
+          id: Date.now(), roofType: 'hip', label: '', unit: currentUnit,
+          volumeM3: currentUnit === 'metric' ? roofVol : roofVol * M3_PER_FT3,
+          displayVolume: roofVol, displayUnit: vu,
+          derivedHeight: measureMode === 'slope' ? A : null,
+          breakdown: null,
+          dims: { L, W, H: A, R: C }, formula: config.formulaText(),
+          wallMode: 'roof',
+        };
+      }
       document.getElementById('save-label').value = '';
       return;
     }
@@ -844,42 +978,79 @@
       }
     }
 
-    const vol = config.formula(L, W, H);
-
+    const roofVol = config.formula(L, W, H);
     const M3_PER_FT3 = 0.0283168;
-    let primary, primaryUnit, altVol, altUnit;
-    if (currentUnit === 'metric') {
-      primary = vol;      primaryUnit = 'm³';
-      altVol  = vol / M3_PER_FT3; altUnit = 'ft³';
+
+    if (getWallMode() === 'walls') {
+      const hw = parseFloat(document.getElementById('field-wallHeight')?.value);
+      if (!isFinite(hw) || hw <= 0) {
+        showError('Please enter a valid positive wall height.');
+        return;
+      }
+      const wallVol = L * W * hw;
+      const vTotal  = roofVol + wallVol;
+      const altTotal = currentUnit === 'metric' ? vTotal / M3_PER_FT3 : vTotal * M3_PER_FT3;
+      const altUnit  = currentUnit === 'metric' ? 'ft³' : 'm³';
+      const derivedNote = measureMode === 'slope'
+        ? `Derived height: ${formatNum(H)} ${u}  ·  Also: ${formatNum(altTotal)} ${altUnit}`
+        : `Also: ${formatNum(altTotal)} ${altUnit}`;
+
+      document.getElementById('result-roof-label').textContent = config.label + ' + Walls — Total Volume';
+      document.getElementById('result-value').textContent = formatNum(vTotal);
+      document.getElementById('result-unit').textContent = vu;
+      document.getElementById('result-alt').textContent = derivedNote;
+      document.getElementById('result-formula').textContent = config.formulaText();
+
+      const bd = document.getElementById('result-breakdown');
+      bd.innerHTML = `
+        <span>🏠 Walls: <strong>${formatNum(wallVol)} ${vu}</strong></span>
+        <span>🏚 Roof: <strong>${formatNum(roofVol)} ${vu}</strong></span>`;
+      bd.classList.remove('d-none');
+      document.getElementById('result').classList.remove('d-none');
+
+      lastResult = {
+        id: Date.now(), roofType: currentRoof, label: '', unit: currentUnit,
+        volumeM3: currentUnit === 'metric' ? vTotal : vTotal * M3_PER_FT3,
+        displayVolume: vTotal, displayUnit: vu,
+        derivedHeight: measureMode === 'slope' ? H : null,
+        breakdown: { wall: wallVol, roof: roofVol },
+        dims: { L, W, H, WH: hw },
+        formula: config.formulaText(),
+        wallMode: 'walls',
+      };
     } else {
-      primary = vol;      primaryUnit = 'ft³';
-      altVol  = vol * M3_PER_FT3; altUnit = 'm³';
+      const vol = roofVol;
+      let primary, primaryUnit, altVol, altUnit;
+      if (currentUnit === 'metric') {
+        primary = vol;      primaryUnit = 'm³';
+        altVol  = vol / M3_PER_FT3; altUnit = 'ft³';
+      } else {
+        primary = vol;      primaryUnit = 'ft³';
+        altVol  = vol * M3_PER_FT3; altUnit = 'm³';
+      }
+      const derivedNote = measureMode === 'slope'
+        ? `Derived height: ${formatNum(H)} ${u}  ·  Also: ${formatNum(altVol)} ${altUnit}`
+        : `Also: ${formatNum(altVol)} ${altUnit}`;
+
+      document.getElementById('result-roof-label').textContent = config.label + ' Volume';
+      document.getElementById('result-value').textContent = formatNum(primary);
+      document.getElementById('result-unit').textContent = primaryUnit;
+      document.getElementById('result-alt').textContent = derivedNote;
+      document.getElementById('result-formula').textContent = config.formulaText();
+      document.getElementById('result-breakdown').classList.add('d-none');
+      document.getElementById('result').classList.remove('d-none');
+
+      lastResult = {
+        id: Date.now(), roofType: currentRoof, label: '', unit: currentUnit,
+        volumeM3: currentUnit === 'metric' ? vol : vol * 0.0283168,
+        displayVolume: primary, displayUnit: primaryUnit,
+        derivedHeight: measureMode === 'slope' ? H : null,
+        breakdown: null,
+        dims: { L, W, H },
+        formula: config.formulaText(),
+        wallMode: 'roof',
+      };
     }
-
-    const derivedNote = measureMode === 'slope'
-      ? `Derived height: ${formatNum(H)} ${u}  ·  Also: ${formatNum(altVol)} ${altUnit}`
-      : `Also: ${formatNum(altVol)} ${altUnit}`;
-
-    document.getElementById('result-roof-label').textContent = config.label + ' Volume';
-    document.getElementById('result-value').textContent = formatNum(primary);
-    document.getElementById('result-unit').textContent = primaryUnit;
-    document.getElementById('result-alt').textContent = derivedNote;
-    document.getElementById('result-formula').textContent = config.formulaText();
-    document.getElementById('result').classList.remove('d-none');
-
-    lastResult = {
-      id: Date.now(),
-      roofType: currentRoof,
-      label: '',
-      unit: currentUnit,
-      volumeM3: currentUnit === 'metric' ? vol : vol * 0.0283168,
-      displayVolume: primary,
-      displayUnit: primaryUnit,
-      derivedHeight: measureMode === 'slope' ? H : null,
-      breakdown: null,
-      dims: { L, W, H },
-      formula: config.formulaText(),
-    };
     document.getElementById('save-label').value = '';
   }
 
@@ -957,24 +1128,28 @@
     }
     section.classList.remove('d-none');
 
-    const roofLabels = { gable: 'Gable', extension: 'Extension', hip: 'Hip', leanto: 'Lean-to', hipwalls: 'Hip + Walls' };
+    const roofLabels = { gable: 'Gable', extension: 'Extension', hip: 'Hip Roof', leanto: 'Lean-to', hipwalls: 'Hip + Walls' };
 
     container.innerHTML = list.map((e, i) => {
       const dimParts = [];
       if (e.dims) {
         const u = e.unit === 'metric' ? 'm' : 'ft';
         if (e.roofType === 'extension') {
-          dimParts.push(`W=${formatNum(e.dims.W)}${u}`, `L₁=${formatNum(e.dims.L1)}${u}`, `L₂=${formatNum(e.dims.L2)}${u}`, `H=${formatNum(e.dims.H)}${u}`);
-        } else if (e.roofType === 'hipwalls') {
-          dimParts.push(`L=${formatNum(e.dims.L)}${u}`, `W=${formatNum(e.dims.W)}${u}`, `h=${formatNum(e.dims.h)}${u}`, `A=${formatNum(e.dims.A)}${u}`, `C=${formatNum(e.dims.C)}${u}`);
+          dimParts.push(`W=${formatNum(e.dims.W)}${u}`, `L=${formatNum(e.dims.L ?? e.dims.L1)}${u}`, `PL=${formatNum(e.dims.PL ?? e.dims.L2)}${u}`, `H=${formatNum(e.dims.H)}${u}`);
+        } else if (e.roofType === 'hipwalls' || (e.roofType === 'hip' && (e.hipMode === 'walls' || e.wallMode === 'walls'))) {
+          dimParts.push(`L=${formatNum(e.dims.L)}${u}`, `W=${formatNum(e.dims.W)}${u}`, `WH=${formatNum(e.dims.WH ?? e.dims.h)}${u}`, `H=${formatNum(e.dims.H ?? e.dims.A)}${u}`, `R=${formatNum(e.dims.R ?? e.dims.C)}${u}`);
+        } else if (e.roofType === 'hip') {
+          dimParts.push(`L=${formatNum(e.dims.L)}${u}`, `W=${formatNum(e.dims.W)}${u}`, `H=${formatNum(e.dims.H ?? e.dims.A)}${u}`, `R=${formatNum(e.dims.R ?? e.dims.C)}${u}`);
         } else {
-          if (e.dims.L) dimParts.push(`L=${formatNum(e.dims.L)}${u}`);
-          if (e.dims.W) dimParts.push(`W=${formatNum(e.dims.W)}${u}`);
-          if (e.dims.H) dimParts.push(`H=${formatNum(e.dims.H)}${u}`);
+          if (e.dims.L)  dimParts.push(`L=${formatNum(e.dims.L)}${u}`);
+          if (e.dims.W)  dimParts.push(`W=${formatNum(e.dims.W)}${u}`);
+          if (e.dims.H)  dimParts.push(`H=${formatNum(e.dims.H)}${u}`);
+          const wh = e.dims.WH ?? e.dims.h;
+          if (wh) dimParts.push(`WH=${formatNum(wh)}${u}`);
         }
       }
       const breakdownHtml = e.breakdown
-        ? e.roofType === 'hipwalls'
+        ? e.breakdown.wall !== undefined
           ? `<div class="saved-breakdown">🏠 Walls: ${formatNum(e.breakdown.wall)} ${e.displayUnit} · 🏚 Roof: ${formatNum(e.breakdown.roof)} ${e.displayUnit}</div>`
           : `<div class="saved-breakdown">🏠 Gable ${formatNum(e.breakdown.gable)} ${e.displayUnit} · 🔺 Pyramid ${formatNum(e.breakdown.pyramid)} ${e.displayUnit}</div>`
         : '';
@@ -1027,25 +1202,58 @@
 
     const rows = list.map((e, i) => {
       const u = e.unit === 'metric' ? 'm' : 'ft';
+      const vu = e.displayUnit;
       const dimParts = [];
       if (e.dims) {
         if (e.roofType === 'extension') {
-          dimParts.push(`W=${formatNum(e.dims.W)}${u}`, `L₁=${formatNum(e.dims.L1)}${u}`, `L₂=${formatNum(e.dims.L2)}${u}`, `H=${formatNum(e.dims.H)}${u}`);
-        } else if (e.roofType === 'hipwalls') {
-          dimParts.push(`L=${formatNum(e.dims.L)}${u}`, `W=${formatNum(e.dims.W)}${u}`, `h=${formatNum(e.dims.h)}${u}`, `A=${formatNum(e.dims.A)}${u}`, `C=${formatNum(e.dims.C)}${u}`);
+          dimParts.push(`W=${formatNum(e.dims.W)}${u}`, `L=${formatNum(e.dims.L ?? e.dims.L1)}${u}`, `PL=${formatNum(e.dims.PL ?? e.dims.L2)}${u}`, `H=${formatNum(e.dims.H)}${u}`);
+        } else if (e.roofType === 'hipwalls' || (e.roofType === 'hip' && (e.hipMode === 'walls' || e.wallMode === 'walls'))) {
+          dimParts.push(`L=${formatNum(e.dims.L)}${u}`, `W=${formatNum(e.dims.W)}${u}`, `WH=${formatNum(e.dims.WH ?? e.dims.h)}${u}`, `H=${formatNum(e.dims.H ?? e.dims.A)}${u}`, `R=${formatNum(e.dims.R ?? e.dims.C)}${u}`);
+        } else if (e.roofType === 'hip') {
+          dimParts.push(`L=${formatNum(e.dims.L)}${u}`, `W=${formatNum(e.dims.W)}${u}`, `H=${formatNum(e.dims.H ?? e.dims.A)}${u}`, `R=${formatNum(e.dims.R ?? e.dims.C)}${u}`);
         } else {
-          if (e.dims.L) dimParts.push(`L=${formatNum(e.dims.L)}${u}`);
-          if (e.dims.W) dimParts.push(`W=${formatNum(e.dims.W)}${u}`);
-          if (e.dims.H) dimParts.push(`H=${formatNum(e.dims.H)}${u}`);
+          if (e.dims.L)  dimParts.push(`L=${formatNum(e.dims.L)}${u}`);
+          if (e.dims.W)  dimParts.push(`W=${formatNum(e.dims.W)}${u}`);
+          if (e.dims.H)  dimParts.push(`H=${formatNum(e.dims.H)}${u}`);
+          const wh = e.dims.WH ?? e.dims.h;
+          if (wh) dimParts.push(`WH=${formatNum(wh)}${u}`);
         }
       }
-      return `<tr>
+
+      // Breakdown sub-rows
+      let breakdownRows = '';
+      if (e.breakdown) {
+        if (e.breakdown.wall !== undefined) {
+          breakdownRows = `
+            <tr class="breakdown-row">
+              <td></td><td colspan="3" style="padding-left:1.5rem;color:#64748b;font-size:0.82rem">
+                🏠 Walls: ${formatNum(e.breakdown.wall)} ${vu} &nbsp;·&nbsp;
+                🏚 Roof: ${formatNum(e.breakdown.roof)} ${vu}
+              </td><td></td>
+            </tr>`;
+        } else if (e.breakdown.gable !== undefined) {
+          breakdownRows = `
+            <tr class="breakdown-row">
+              <td></td><td colspan="3" style="padding-left:1.5rem;color:#64748b;font-size:0.82rem">
+                🏠 Gable: ${formatNum(e.breakdown.gable)} ${vu} &nbsp;·&nbsp;
+                🔺 Pyramid: ${formatNum(e.breakdown.pyramid)} ${vu}
+              </td><td></td>
+            </tr>`;
+        }
+      }
+
+      // Type label — append "+ Walls" if applicable
+      const hasWalls = e.breakdown?.wall !== undefined;
+      const typeLabel = (roofLabels[e.roofType] || e.roofType) + (hasWalls ? ' + Walls' : '');
+
+      const mainRowClass = breakdownRows ? ' class="has-breakdown"' : '';
+      return `<tr${mainRowClass}>
         <td>${i + 1}</td>
         <td>${e.label}</td>
-        <td>${roofLabels[e.roofType] || e.roofType}</td>
+        <td>${typeLabel}</td>
         <td>${dimParts.join(', ')}</td>
-        <td style="text-align:right;font-weight:600">${formatNum(e.displayVolume)} ${e.displayUnit}</td>
-      </tr>`;
+        <td style="text-align:right;font-weight:600">${formatNum(e.displayVolume)} ${vu}</td>
+      </tr>${breakdownRows}`;
     }).join('');
 
     const date = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
@@ -1058,6 +1266,8 @@
         table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
         th { background: #f1f5f9; text-align: left; padding: 0.5rem 0.75rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
         td { padding: 0.55rem 0.75rem; border-bottom: 1px solid #e2e8f0; }
+        .has-breakdown td { border-bottom: none; }
+        .breakdown-row td { border-bottom: 1px solid #e2e8f0; padding-top: 0.1rem; padding-bottom: 0.5rem; }
         tr:last-child td { border-bottom: none; }
         .total-row td { font-weight: 700; background: #eff6ff; font-size: 1rem; }
         .total-row td:last-child { color: #1d4ed8; }
@@ -1074,6 +1284,19 @@
           </tr>
         </tbody>
       </table>
+      <div style="margin-top:2rem;padding-top:1rem;border-top:1px solid #e2e8f0">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;margin-bottom:0.6rem">Dimensions Key</div>
+        <table style="width:auto;font-size:0.82rem;border-collapse:collapse">
+          <tr><td style="padding:0.2rem 1.2rem 0.2rem 0;color:#1e293b"><strong>L</strong></td><td style="color:#475569">Length (along the ridge / eave)</td></tr>
+          <tr><td style="padding:0.2rem 1.2rem 0.2rem 0;color:#1e293b"><strong>W</strong></td><td style="color:#475569">Width (perpendicular to ridge, eave to eave)</td></tr>
+          <tr><td style="padding:0.2rem 1.2rem 0.2rem 0;color:#1e293b"><strong>H</strong></td><td style="color:#475569">Roof height — vertical, eave to ridge</td></tr>
+          <tr><td style="padding:0.2rem 1.2rem 0.2rem 0;color:#1e293b"><strong>WH</strong></td><td style="color:#475569">Wall height — ground to eave (Roof + Walls mode only)</td></tr>
+          <tr><td style="padding:0.2rem 1.2rem 0.2rem 0;color:#1e293b"><strong>S</strong></td><td style="color:#475569">Slope length — along the roof surface, eave to ridge</td></tr>
+          <tr><td style="padding:0.2rem 1.2rem 0.2rem 0;color:#1e293b"><strong>R</strong></td><td style="color:#475569">Ridge length — flat section at the top (Hip roof only)</td></tr>
+          <tr><td style="padding:0.2rem 1.2rem 0.2rem 0;color:#1e293b"><strong>L</strong></td><td style="color:#475569">Gable length — rectangular section (Extension only)</td></tr>
+          <tr><td style="padding:0.2rem 1.2rem 0.2rem 0;color:#1e293b"><strong>PL</strong></td><td style="color:#475569">Pyramid length — tapering section (Extension only)</td></tr>
+        </table>
+      </div>
     </body></html>`;
 
     const win = window.open('', '_blank');
